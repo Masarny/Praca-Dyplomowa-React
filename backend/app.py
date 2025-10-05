@@ -39,37 +39,56 @@ def generate_password():
 @app.route("/api/generate_diceware")
 def generate_diceware():
     try:
-        word_count = int(request.args.get("count", 6))
+        count = int(request.args.get("count", 5))
     except ValueError:
         return jsonify({"error": "Invalid count"}), 400
 
-    if word_count < 1 or word_count > 32:
+    if count < 1 or count > 32:
         return jsonify({"error": "Count must be between 1 and 32"}), 400
+
+    sep_param = request.args.get("sep", "space").lower()
+    sep_map = {
+        "space": " ",
+        "dash": "-",
+        "underscore": "_",
+        "slash": "/",
+    }
+
+    if sep_param == "random":
+        separator = random.choice(list(sep_map.values()))
+    else:
+        separator = sep_map.get(sep_param)
+
+    if separator is None:
+        return jsonify({"error": "Invalid separator"}), 400
 
     DICEWARE_WORDS = {}
 
     try:
-        with open("dicts/dice-directory.txt", encoding="utf-8") as file:
-            for line in file:
+        with open("dicts/dice-directory.txt", "r", encoding="utf-8") as f:
+            for line in f:
                 parts = line.strip().split()
-                if len(parts) == 2:
-                    key, word = parts
+                if len(parts) >= 2:
+                    key, word = parts[0], parts[1]
                     DICEWARE_WORDS[key] = word
     except FileNotFoundError:
-        return jsonify({"error": "Missing diceware dictionary file"}), 500
+        return jsonify({"error": "Diceware dictionary file not found"}), 500
     
     words = []
 
-    for _ in range(word_count):
+    for _ in range(count):
         while True:
             key = "".join(str(random.randint(1, 6)) for _ in range(5))
             if key in DICEWARE_WORDS:
                 words.append(DICEWARE_WORDS[key])
                 break
 
-    password = " ".join(words)
+    password = separator.join(words)
 
-    return jsonify({"password": password})
+    return jsonify({
+        "password": password,
+        "separator_used": separator  # frontend może to wyświetlić, jeśli chcesz
+    })
 
 
 @app.route("/api/test_password", methods=["POST"])
