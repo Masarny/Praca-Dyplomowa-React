@@ -4,55 +4,82 @@ import { Link } from "react-router-dom";
 export default function Creator() {
   const [length, setLength] = useState(24);
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [method, setMethod] = useState("random");
 
   const generatePassword = async () => {
-    setLoading(true);
-    setError(null);
+    let url = "";
 
-    try {
-      const res = await fetch(`/api/generate?length=${length}`);
+    if (method === "random") {
+      url = `/api/generate?length=${length}`;
+    } else if (method === "diceware") {
+      url = `/api/generate_diceware?count=${length}`;
+    } else if (method === "passphrase") {
+      url = `/api/generate_passphrase?count=${length}`;
+    }
 
-      if (!res.ok) {
-        throw new Error(`Error status ${res.status}`);
-      }
-      const data = await res.json();
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (res.ok) {
       setPassword(data.password);
-    } catch (err) {
-      console.error("Error fetching password:", err);
-      setError("Failed to generate password");
-    } finally {
-      setLoading(false);
+    } else {
+      setPassword("Error generating password");
     }
   };
 
+  const handleSave = () => {
+    alert("Password saved (placeholder — not yet connected to DB).");
+  };
+
+  // dynamiczne podpisy
+  const labelText =
+    method === "random"
+      ? "Password length:"
+      : "Number of words:";
+
+  const min = method === "random" ? 8 : 3;
+  const max = method === "random" ? 128 : 32;
+
   return (
     <div className="container">
+      <h2>Create your password</h2>
 
-      <h2>Create your password (random method)</h2>
+      <label>Choose generation method:</label>
+      <select
+        className="password_select"
+        value={method}
+        onChange={(e) => setMethod(e.target.value)}
+        style={{ marginTop: "10px", padding: "5px", width: "100%" }}
+      >
+        <option value="random">Random (letters, digits, symbols)</option>
+        <option value="diceware">Diceware (random words)</option>
+        <option value="passphrase">Passphrase (readable phrase)</option>
+      </select>
 
-      <label>
-        Password length: <span>{length}</span>
+      <label style={{ marginTop: "15px" }}>
+        {labelText} <span>{length}</span>
       </label>
 
       <input
         type="range"
-        min="8"
-        max="128"
+        min={min}
+        max={max}
         value={length}
         onChange={(e) => setLength(Number(e.target.value))}
       />
 
-      <button className="btn" onClick={generatePassword} disabled={loading}>
-        {loading ? "Generating..." : "Generate password"}
+      <button className="btn" onClick={generatePassword}>
+        Generate password
       </button>
 
       <div id="generated-password-box">
-        <p>Generated password: {password}</p>
+        <p><strong>Generated password:</strong></p>
+        <p id="generated-password">{password}</p>
       </div>
-      
-      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <button className="btn" onClick={handleSave}>
+        Save password to database
+      </button>
 
       <Link to="/main"><button className="btn">Return</button></Link>
 

@@ -76,6 +76,17 @@ nav p {
     color: #555;
 }
 
+.password_select {
+    cursor: pointer;
+    width 100%;
+    font-size: 16px;
+    margin-bottom: 15px;
+    border-width: 0.8px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+}
+
 input[type="range"] {
     width: 100%;
     margin-top: 10px;
