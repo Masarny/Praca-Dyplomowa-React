@@ -1,0 +1,101 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #fffff0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 300px;
+    background: white;
+    border-style: solid;
+    border-color: #D1B000;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+input, button {
+    margin-top: 15px;
+    padding: 10px;
+    font-size: 16px;
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background-color: white;
+    color: black;
+    border-style: solid;
+    border-color: black;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0, 123, 255, 0.2);
+}
+
+.nav {
+    background-color: #ffffff;
+    width: 200px;
+    height: 25px;
+    padding: 25px;
+    margin: 25px;
+    border-radius: 16px;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.nav:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0, 123, 255, 0.2);
+}
+
+.nav h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+nav p {
+    font-size: 14px;
+    color: #555;
+}
+
+input[type="range"] {
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+#length-value {
+    font-weight: bold;
+    color: #007BFF;
+}
+
+#generated-password-box {
+    background-color: #f5f5f5;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 8px;
+    word-break: break-all;
+}
+
+#generated-password {
+    font-size: 16px;
+    color: #333;
+}
