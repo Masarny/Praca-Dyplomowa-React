@@ -13,9 +13,7 @@ export default function Creator() {
       url = `/api/generate?length=${length}`;
     } else if (method === "diceware") {
       url = `/api/generate_diceware?count=${length}`;
-    } else if (method === "passphrase") {
-      url = `/api/generate_passphrase?count=${length}`;
-    }
+    } 
 
     const res = await fetch(url);
     const data = await res.json();
@@ -28,10 +26,9 @@ export default function Creator() {
   };
 
   const handleSave = () => {
-    alert("Password saved (placeholder — not yet connected to DB).");
+    alert("Password saved (placeholder).");
   };
 
-  // dynamiczne podpisy
   const labelText =
     method === "random"
       ? "Password length:"
@@ -49,11 +46,9 @@ export default function Creator() {
         className="password_select"
         value={method}
         onChange={(e) => setMethod(e.target.value)}
-        style={{ marginTop: "10px", padding: "5px", width: "100%" }}
       >
-        <option value="random">Random (letters, digits, symbols)</option>
-        <option value="diceware">Diceware (random words)</option>
-        <option value="passphrase">Passphrase (readable phrase)</option>
+        <option value="random">Random</option>
+        <option value="diceware">Diceware</option>
       </select>
 
       <label style={{ marginTop: "15px" }}>

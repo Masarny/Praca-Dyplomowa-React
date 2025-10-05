@@ -72,78 +72,107 @@ def generate_diceware():
     return jsonify({"password": password})
 
 
-@app.route("/api/generate_passphrase")
-def generate_passphrase():
-    try:
-        count = int(request.args.get("count", 4))
-    except ValueError:
-        return jsonify({"error": "Invalid count"}), 400
-
-    if count < 1 or count > 32:
-        return jsonify({"error": "Count must be between 1 and 32"}), 400
-
-    words = []
-
-    try:
-        with open("dicts/dice-directory.txt", encoding="utf-8") as file:
-            for line in file:
-                parts = line.strip().split()
-                if len(parts) == 2:
-                    _, word = parts
-                    words.append(word)
-    except FileNotFoundError:
-        return jsonify({"error": "Missing diceware dictionary file"}), 500
-
-    separators = ["-", "_", ".", "~"]
-    sep = secrets.choice(separators)
-    phrase = sep.join(secrets.choice(words).capitalize() for _ in range(count))
-    if secrets.randbelow(2):
-        phrase += str(secrets.randbelow(100))
-    return jsonify({"password": phrase})
-
-
 @app.route("/api/test_password", methods=["POST"])
 def test_password():
+    """
+    Checks password strength using zxcvbn + entropy logic for passphrases.
+    Returns detailed feedback, suggestions, and estimated crack time.
+    """
+    import math
+    from zxcvbn import zxcvbn
+
     data = request.json
     password = data.get("password", "")
 
     if not password:
         return jsonify({"error": "Password is required"}), 400
 
+    words = re.findall(r"[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", password)
+    word_count = len(words)
+
     try:
-        with open("dicts/commonWords.json", encoding="utf-8") as pol_dict:
-            polish_dict = json.load(pol_dict)
-        add_frequency_lists({'common_words': polish_dict})
+        result = zxcvbn(password)
+        strength_score = result["score"]
+        feedback = result.get("feedback", {})
+        crack_time = result["crack_times_display"]["offline_slow_hashing_1e4_per_second"]
     except Exception:
-        polish_dict = []
+        strength_score = 0
+        feedback = {}
+        crack_time = "Unknown"
 
-    data = zxcvbn(password)
-    feedback = data["feedback"]
-    crack_time = data["crack_times_display"]["offline_slow_hashing_1e4_per_second"]
-    polish_crack_time = translate_crack_time_string(crack_time)
-    
-    if isinstance(feedback["warning"], list):
-        warnings = [polish["warning"].get(w, w) for w in feedback["warning"]]
-    elif feedback["warning"]:
-        warnings = [polish["warning"].get(feedback["warning"], feedback["warning"])]
-    else:
-        warnings = ["Brak ostrzeżeń!"]
+    if word_count >= 3:
+        entropy = math.log2(7776 ** word_count)  # Diceware word list entropy
+        if entropy < 40:
+            strength_score = 1
+        elif entropy < 60:
+            strength_score = 2
+        elif entropy < 80:
+            strength_score = 3
+        else:
+            strength_score = 4
+        crack_time = f"{round(entropy, 1)} bits of entropy"
 
-    if isinstance(feedback["suggestions"], list):
-        suggestions = [polish["suggestions"].get(s, s) for s in feedback["suggestions"]]
-    elif feedback["suggestions"]:
-        suggestions = [polish["suggestions"].get(feedback["suggestions"], feedback["suggestions"])]
-    else:
-        suggestions = ["Brak sugestii!"]
+    warnings = []
+    suggestions = []
+
+    if feedback.get("warning"):
+        warnings.append(feedback["warning"])
+
+    for s in feedback.get("suggestions", []):
+        suggestions.append(s)
+
+    if len(password) < 8:
+        suggestions.append("Use at least 8 characters.")
+    if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password):
+        suggestions.append("Add uppercase letters.")
+    if not re.search(r"\d", password):
+        suggestions.append("Include at least one number.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        suggestions.append("Add special characters (e.g. @, #, $, !).")
+    if word_count >= 3:
+        suggestions.append("Passphrases with multiple random words are a great choice.")
+    if word_count > 8:
+        warnings.append("Overly long passphrases may be hard to remember.")
+
+    labels = ["Very Weak", "Weak", "Medium", "Strong", "Very Strong"]
+    strength_label = labels[strength_score]
 
     return jsonify({
-        "strength": data["score"],  # liczba 0–4
-        "warnings": warnings,
-        "suggestions": suggestions,
-        "crack_time": polish_crack_time
+        "strength": strength_label,
+        "score": strength_score,
+        "warnings": warnings or ["No warnings!"],
+        "suggestions": suggestions or ["No suggestions!"],
+        "crack_time": crack_time
     })
 
-    
+
+@app.route("/api/guidelines")
+def get_guidelines():
+    guidelines = {
+        "Passwords": [
+            "Use at least 12–16 characters.",
+            "Mix uppercase, lowercase, numbers, and symbols.",
+            "Avoid dictionary words or personal info.",
+            "Use a passphrase made of random words for stronger security.",
+            "Never reuse passwords between sites."
+        ],
+        "Authentication": [
+            "Enable two-factor authentication (2FA) whenever possible.",
+            "Use an authenticator app instead of SMS codes.",
+            "Don’t share authentication codes or backup keys.",
+            "Review active sessions and revoke unknown devices."
+        ],
+        "Cybersecurity": [
+            "Keep your system and browser up to date.",
+            "Be careful with links and attachments in emails.",
+            "Use a VPN on public Wi-Fi networks.",
+            "Regularly back up your important data.",
+            "Lock your device when you step away."
+        ]
+    }
+    return jsonify(guidelines)
+
+  
 if __name__ == "__main__":
     app.run(debug=True)
 

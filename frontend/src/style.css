@@ -20,6 +20,21 @@ body {
     text-align: center;
 }
 
+.container_guide {
+    max-width: 800px;
+    width: 90%;
+    background: white;
+    border: 2px solid #D1B000;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    margin: 40px auto;
+    overflow-y: auto;
+    max-height: 90vh;
+    scroll-snap-type: y mandatory;
+}
+
 input, button {
     margin-top: 15px;
     padding: 10px;
@@ -78,8 +93,10 @@ nav p {
 
 .password_select {
     cursor: pointer;
-    width 100%;
+    width: 100%;
+    padding: 10px;
     font-size: 16px;
+    margin-top: 15px;
     margin-bottom: 15px;
     border-width: 0.8px;
     border-radius: 5px;
@@ -109,4 +126,38 @@ input[type="range"] {
 #generated-password {
     font-size: 16px;
     color: #333;
+}
+
+.guideline-card {
+    background: #fdfdfd;
+    border: 1px solid #d1b000;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease-in-out;
+    scroll-snap-align: start;
+}
+
+.guideline-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.2);
+}
+
+.guideline-card h3 {
+    color: #333;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #007BFF;
+    display: inline-block;
+}
+
+.guideline-card ul {
+    list-style-type: "💡 ";
+    padding-left: 20px;
+    margin-top: 10px;
+}
+
+.guideline-card li {
+    margin-bottom: 8px;
+    font-size: 15px;
 }
