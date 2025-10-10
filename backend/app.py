@@ -93,74 +93,156 @@ def generate_diceware():
 
 @app.route("/api/test_password", methods=["POST"])
 def test_password():
-    """
-    Checks password strength using zxcvbn + entropy logic for passphrases.
-    Returns detailed feedback, suggestions, and estimated crack time.
-    """
     import math
     from zxcvbn import zxcvbn
+    import json
 
-    data = request.json
+    data = request.json or {}
     password = data.get("password", "")
 
     if not password:
         return jsonify({"error": "Password is required"}), 400
+
+    try:
+        from translation import polish as polish_translations, translate_crack_time_string
+    except Exception:
+        polish_translations = {
+            "warning": {
+                "straight_rows_of_keys": "Unikaj prostych sekwencji klawiszy jak 'qwerty'.",
+                "key_pattern": "Unikaj wzorców na klawiaturze.",
+                "simple_repeat": "Hasło zawiera powtarzające się znaki.",
+                "repeated_pattern": "Hasło składa się z powtórzeń wzorca.",
+                "digits_only": "Hasło składa się tylko z cyfr.",
+                "common_words": "Hasło zawiera powszechne słowa."
+            },
+            "suggestions": {
+                "use_a_longer_password": "Użyj dłuższego hasła.",
+                "add_another_word": "Dodaj kolejne słowo.",
+                "capitalize_different_letters": "Zmieniaj wielkość liter w losowych miejscach.",
+                "add_numbers_or_symbols": "Dodaj cyfry lub symbole.",
+                "avoid_common_words": "Unikaj powszechnych słów i fraz."
+            }
+        }
+
+        def translate_crack_time_string(s):
+            if not isinstance(s, str):
+                return s
+            mapping = {
+                "less than a second": "mniej niż sekunda",
+                "seconds": "sekundy",
+                "minutes": "minuty",
+                "hours": "godziny",
+                "days": "dni",
+                "months": "miesiące",
+                "centuries": "stulecia",
+                "Unknown": "Nieznany"
+            }
+            for en, pl in mapping.items():
+                if en in s:
+                    return s.replace(en, pl)
+            return s
 
     words = re.findall(r"[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", password)
     word_count = len(words)
 
     try:
         result = zxcvbn(password)
-        strength_score = result["score"]
-        feedback = result.get("feedback", {})
-        crack_time = result["crack_times_display"]["offline_slow_hashing_1e4_per_second"]
+        z_score = int(result.get("score", 0))  # 0..4
+        z_feedback = result.get("feedback", {}) or {}
+        z_crack_time = result.get("crack_times_display", {}).get("offline_slow_hashing_1e4_per_second", "Unknown")
     except Exception:
-        strength_score = 0
-        feedback = {}
-        crack_time = "Unknown"
+        z_score = 0
+        z_feedback = {}
+        z_crack_time = "Unknown"
 
     if word_count >= 3:
-        entropy = math.log2(7776 ** word_count)  # Diceware word list entropy
+        entropy = math.log2((7776) ** word_count)
         if entropy < 40:
-            strength_score = 1
+            score = 1
         elif entropy < 60:
-            strength_score = 2
+            score = 2
         elif entropy < 80:
-            strength_score = 3
+            score = 3
         else:
-            strength_score = 4
-        crack_time = f"{round(entropy, 1)} bits of entropy"
+            score = 4
+        crack_time = f"{round(entropy, 1)} bity entropii"
+    else:
+        score = z_score
+        crack_time = translate_crack_time_string(z_crack_time)
 
     warnings = []
     suggestions = []
 
-    if feedback.get("warning"):
-        warnings.append(feedback["warning"])
+    z_warn = z_feedback.get("warning")
+    z_sugs = z_feedback.get("suggestions", [])
 
-    for s in feedback.get("suggestions", []):
-        suggestions.append(s)
+    def translate_warning(w):
+        if not w:
+            return None
+        if isinstance(w, str):
+            for key, val in polish_translations.get("warning", {}).items():
+                if key.replace('_', ' ') in w.lower() or key in w:
+                    return val
+            return w
+
+    def translate_suggestion(s):
+        if not s:
+            return None
+        for key, val in polish_translations.get("suggestions", {}).items():
+            if key.replace('_', ' ') in s.lower() or key in s:
+                return val
+        return s
+
+    if isinstance(z_warn, list):
+        for w in z_warn:
+            tw = translate_warning(w)
+            if tw:
+                warnings.append(tw)
+    elif isinstance(z_warn, str) and z_warn:
+        tw = translate_warning(z_warn)
+        if tw:
+            warnings.append(tw)
+
+    if isinstance(z_sugs, list):
+        for s in z_sugs:
+            ts = translate_suggestion(s)
+            if ts:
+                suggestions.append(ts)
 
     if len(password) < 8:
-        suggestions.append("Use at least 8 characters.")
+        suggestions.append("Użyj co najmniej 8 znaków.")
     if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password):
-        suggestions.append("Add uppercase letters.")
+        suggestions.append("Dodaj wielkie litery.")
     if not re.search(r"\d", password):
-        suggestions.append("Include at least one number.")
+        suggestions.append("Dodaj co najmniej jedną cyfrę.")
     if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        suggestions.append("Add special characters (e.g. @, #, $, !).")
+        suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
     if word_count >= 3:
-        suggestions.append("Passphrases with multiple random words are a great choice.")
-    if word_count > 8:
-        warnings.append("Overly long passphrases may be hard to remember.")
+        suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
+    if word_count > 12:
+        warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
 
-    labels = ["Very Weak", "Weak", "Medium", "Strong", "Very Strong"]
-    strength_label = labels[strength_score]
+    def uniq_preserve(seq):
+        seen = set()
+        out = []
+        for item in seq:
+            if item not in seen:
+                seen.add(item)
+                out.append(item)
+        return out
+
+    warnings = uniq_preserve(warnings) or ["Brak ostrzeżeń!"]
+    suggestions = uniq_preserve(suggestions) or ["Brak sugestii!"]
+
+    labels = ["Bardzo słabe", "Słabe", "Średnie", "Silne", "Bardzo silne"]
+    score = max(0, min(4, int(score)))
+    strength_label = labels[score]
 
     return jsonify({
         "strength": strength_label,
-        "score": strength_score,
-        "warnings": warnings or ["No warnings!"],
-        "suggestions": suggestions or ["No suggestions!"],
+        "score": score,
+        "warnings": warnings,
+        "suggestions": suggestions,
         "crack_time": crack_time
     })
 
@@ -168,25 +250,25 @@ def test_password():
 @app.route("/api/guidelines")
 def get_guidelines():
     guidelines = {
-        "Passwords": [
-            "Use at least 12–16 characters.",
-            "Mix uppercase, lowercase, numbers, and symbols.",
-            "Avoid dictionary words or personal info.",
-            "Use a passphrase made of random words for stronger security.",
-            "Never reuse passwords between sites."
+        "Hasła": [
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder."
         ],
-        "Authentication": [
-            "Enable two-factor authentication (2FA) whenever possible.",
-            "Use an authenticator app instead of SMS codes.",
-            "Don’t share authentication codes or backup keys.",
-            "Review active sessions and revoke unknown devices."
+        "Uwierzytelnianie": [
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder."
         ],
-        "Cybersecurity": [
-            "Keep your system and browser up to date.",
-            "Be careful with links and attachments in emails.",
-            "Use a VPN on public Wi-Fi networks.",
-            "Regularly back up your important data.",
-            "Lock your device when you step away."
+        "Cyberbezpieczeństwo": [
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder.",
+            "Placeholder."
         ]
     }
     return jsonify(guidelines)

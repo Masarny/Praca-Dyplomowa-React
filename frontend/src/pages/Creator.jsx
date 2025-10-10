@@ -58,9 +58,9 @@ export default function Creator() {
 
   return (
     <div className="container">
-      <h2>Create your password</h2>
+      <h2>Stwórz Swoje hasło</h2>
 
-      <label>Choose generation method:</label>
+      <label>Wybierz Metodę Generowania Hasła:</label>
       <select
         className="password_select"
         value={method}
@@ -71,13 +71,13 @@ export default function Creator() {
           setError(null);
         }}
       >
-        <option value="random">Random (letters, digits, symbols)</option>
-        <option value="diceware">Diceware (random words)</option>
+        <option value="random">Random (Litery, Cyfry, Symbole)</option>
+        <option value="diceware">Diceware (Losowe Słowa)</option>
       </select>
 
       <div>
         <label>
-          {labelText} <span style={{ fontWeight: 700 }}>{length}</span>
+          Długość hasła: <span style={{ fontWeight: 700 }}>{length}</span>
         </label>
         <input
           type="range"
@@ -97,14 +97,14 @@ export default function Creator() {
             onChange={(e) => setSeparator(e.target.value)}
             style={{ marginTop: 8, padding: 6, width: "100%" }}
           >
-            <option value="space">Space ( )</option>
-            <option value="dash">Dash (-)</option>
-            <option value="underscore">Underscore (_)</option>
-            <option value="slash">Slash (/)</option>
-            <option value="random">Random separator</option>
+            <option value="space">Spacja ( )</option>
+            <option value="dash">Myślnik (-)</option>
+            <option value="underscore">Podkreślenie (_)</option>
+            <option value="slash">Ukośnik (/)</option>
+            <option value="random">Losowy Separator</option>
           </select>
           <small style={{ display: "block", marginTop: 6, color: "#666" }}>
-            Choose how words are joined — or let the app pick a random one.
+            Wybierz sposób łączenia słów - lub pozwól aplikacji wybrać słowo losowo.
           </small>
         </div>
       )}
@@ -116,7 +116,7 @@ export default function Creator() {
           disabled={loading}
           style={{ flex: 1 }}
         >
-          {loading ? "Generating..." : "Generate password"}
+          {loading ? "Tworzenie hasła..." : "Utwórz hasło"}
         </button>
 
         <button
@@ -128,12 +128,12 @@ export default function Creator() {
           }}
           style={{ flex: 1 }}
         >
-          Reset
+          Resetuj
         </button>
       </div>
 
       <div id="generated-password-box">
-        <p style={{ marginBottom: 8, fontWeight: 600 }}>Generated password:</p>
+        <p style={{ marginBottom: 8, fontWeight: 600 }}>Utworzone hasło:</p>
         <div
           style={{
             backgroundColor: "#f5f5f5",
@@ -143,7 +143,7 @@ export default function Creator() {
           }}
         >
           <span id="generated-password">
-            {password || <em style={{ color: "#666" }}>No password yet</em>}
+            {password || <em style={{ color: "#666" }}>Brak Hasła</em>}
           </span>
         </div>
 
@@ -152,17 +152,17 @@ export default function Creator() {
 
       <div>
         <button className="btn" onClick={copyToClipboard} disabled={!password}>
-          {copied ? "Copied!" : "Copy to clipboard"}
+          {copied ? "Skopiowano!" : "Kopiuj do schowka"}
         </button>
       </div>
 
       <div>
         <button className="btn" onClick={() => alert("Save placeholder - not implemented")}>
-          Save password to database
+          Zapisz Hasło
         </button>
       </div>
 
-      <Link to="/main"><button className="btn">Return</button></Link>
+      <Link to="/main"><button className="btn">Powrót</button></Link>
 
     </div>
   );

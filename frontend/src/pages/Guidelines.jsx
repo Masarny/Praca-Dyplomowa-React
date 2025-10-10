@@ -30,7 +30,7 @@ export default function Guidelines() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        🔐 Security Guidelines
+        Wytyczne Dotyczące Bezpieczeństwa
       </motion.h2>
 
       {Object.entries(guidelines).map(([category, tips], idx) => (
@@ -63,7 +63,7 @@ export default function Guidelines() {
         style={{ textAlign: "center", marginTop: "20px" }}
       >
         <Link to="/main">
-          <button className="btn">Return</button>
+          <button className="btn">Powrót</button>
         </Link>
       </motion.div>
     </div>

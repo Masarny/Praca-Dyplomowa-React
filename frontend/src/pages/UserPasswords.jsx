@@ -8,13 +8,13 @@ export default function UserPasswords() {
 
   return (
     <div className="container">
-      <h2>User Passwords</h2>
+      <h2>Hasła Użytkownika</h2>
       <table>
         <thead>
           <tr>
-            <th>Site</th>
-            <th>Username</th>
-            <th>Password</th>
+            <th>Strona</th>
+            <th>Login</th>
+            <th>Hasło</th>
           </tr>
         </thead>
         <tbody>
@@ -28,7 +28,7 @@ export default function UserPasswords() {
         </tbody>
       </table>
 
-      <Link to="/main"><button className="btn">Return</button></Link>
+      <Link to="/main"><button className="btn">Powrót</button></Link>
     </div>
   );
 }
