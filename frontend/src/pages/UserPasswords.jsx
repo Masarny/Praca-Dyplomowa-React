@@ -4,38 +4,42 @@ import { Link } from "react-router-dom";
 export default function UserPasswords() {
   const [passwords, setPasswords] = useState([]);
   const [site, setSite] = useState("");
-  const [username, setUsername] = useState("");
-  const [pwd, setPwd] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [login, setLogin] = useState("");
+  const [password, setPassword] = useState("");
+  const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const token = localStorage.getItem("token");
 
   const fetchPasswords = async () => {
-    setLoading(true);
     try {
       const res = await fetch("/api/passwords/", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Nie udało się pobrać danych");
+
+      if (!res.ok) {
+        const msg = await res.text();
+        console.error("Błąd backendu:", res.status, msg);
+        throw new Error("Błąd pobierania danych lub autoryzacji.");
+      }
+
       const data = await res.json();
       setPasswords(data);
     } catch (e) {
-      console.error(e);
-      setPasswords([]);
-    } finally {
-      setLoading(false);
+      console.error("fetchPasswords error:", e);
+      alert("Błąd połączenia z serwerem lub brak autoryzacji.");
     }
   };
 
   useEffect(() => {
-    fetchPasswords();
+    if (token) fetchPasswords();
   }, []);
 
-  const handleAdd = async () => {
-    if (!site || !username || !pwd) {
-      alert("Wypełnij wszystkie pola.");
-      return;
-    }
-
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
     try {
       const res = await fetch("/api/passwords/", {
         method: "POST",
@@ -43,79 +47,97 @@ export default function UserPasswords() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ site, login: username, password: pwd }),
+        body: JSON.stringify({ site, login, password, notes }),
       });
-      if (!res.ok) throw new Error("Nie udało się dodać hasła.");
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Błąd zapisu hasła");
+
       setSite("");
-      setUsername("");
-      setPwd("");
+      setLogin("");
+      setPassword("");
+      setNotes("");
       fetchPasswords();
-    } catch (e) {
-      console.error(e);
-      alert(e.message);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="container">
-      <h2>Hasła Użytkownika</h2>
+      <h2>Twoje zapisane hasła</h2>
 
-      {loading ? (
-        <p>Ładowanie...</p>
-      ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>Strona</th>
-              <th>Login</th>
-              <th>Hasło</th>
-            </tr>
-          </thead>
-          <tbody>
-            {passwords.length > 0 ? (
-              passwords.map((p, i) => (
-                <tr key={i}>
-                  <td>{p.site}</td>
-                  <td>{p.login}</td>
-                  <td>{p.password}</td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="3" style={{ textAlign: "center", color: "#777" }}>
-                  Brak zapisanych haseł.
-                </td>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      <table>
+        <thead>
+          <tr>
+            <th>Strona</th>
+            <th>Login</th>
+            <th>Hasło</th>
+            <th>Notatki</th>
+          </tr>
+        </thead>
+        <tbody>
+          {passwords.length > 0 ? (
+            passwords.map((p) => (
+              <tr key={p.id}>
+                <td>{p.site}</td>
+                <td>{p.login}</td>
+                <td>{p.password}</td>
+                <td>{p.notes}</td>
               </tr>
-            )}
-          </tbody>
-        </table>
-      )}
+            ))
+          ) : (
+            <tr>
+              <td colSpan="4" style={{ textAlign: "center" }}>
+                Brak zapisanych haseł.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
 
-      {/* 🔹 Formularz dodawania nowego wpisu */}
-      <div style={{ marginTop: 20 }}>
-        <h3>Dodaj nowe hasło</h3>
+      <h3>Dodaj nowe hasło</h3>
+      <form onSubmit={handleSave}>
         <input
+          type="text"
           placeholder="Strona (np. gmail.com)"
           value={site}
           onChange={(e) => setSite(e.target.value)}
+          required
         />
         <input
-          placeholder="Login / adres e-mail"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          type="text"
+          placeholder="Login"
+          value={login}
+          onChange={(e) => setLogin(e.target.value)}
+          required
         />
         <input
+          type="text"
           placeholder="Hasło"
-          value={pwd}
-          onChange={(e) => setPwd(e.target.value)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        <button className="btn" onClick={handleAdd}>
-          Dodaj
+        <textarea
+          placeholder="Notatki (opcjonalne)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows="2"
+        />
+        <button className="btn" type="submit" disabled={loading}>
+          {loading ? "Zapisywanie..." : "Zapisz hasło"}
         </button>
-      </div>
+      </form>
 
       <Link to="/main">
-        <button className="btn">Powrót</button>
+        <button className="btn" style={{ marginTop: "20px" }}>
+          Powrót
+        </button>
       </Link>
     </div>
   );

@@ -1,5 +1,6 @@
 import re
 
+
 polish = {
     "warning": {
         "Straight rows of keys are easy to guess.": "Sekwencje klawiszy w jednym rzędzie są łatwe do odgadnięcia.",
@@ -43,6 +44,7 @@ polish = {
         "Combine random words to create a passphrase.": "Połącz kilka losowych słów, aby utworzyć bezpieczną frazę."
     }
 }
+
 
 time_translations = {
     "second": ["sekunda", "sekundy", "sekund"],

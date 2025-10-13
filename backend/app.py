@@ -12,7 +12,7 @@ import os
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 
 
-CORS(app)
+CORS(app, origins=["http://localhost:5173"])
 
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///data.db")
@@ -193,6 +193,7 @@ def get_guidelines():
             "Placeholder."
         ]
     })
+
 
 if __name__ == "__main__":
     app.run(debug=True)

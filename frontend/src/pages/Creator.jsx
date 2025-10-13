@@ -57,7 +57,6 @@ export default function Creator() {
     }
   };
 
-  // ✅ NOWA FUNKCJA: zapisuje hasło do bazy użytkownika
   const handleSavePassword = async () => {
     if (!token) {
       alert("Musisz się zalogować, aby zapisać hasło.");
@@ -195,7 +194,6 @@ export default function Creator() {
         </button>
       </div>
 
-      {/* 🔹 DODANE POLA DO ZAPISU */}
       <div style={{ marginTop: 20 }}>
         <input
           placeholder="Strona (np. gmail.com)"

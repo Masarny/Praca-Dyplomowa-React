@@ -5,7 +5,9 @@ from database import db
 from models import User
 from datetime import timedelta, datetime
 
+
 auth_bp = Blueprint("auth", __name__)
+
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
@@ -41,7 +43,7 @@ def login():
         return jsonify({"error": "Nieprawidłowa nazwa użytkownika lub hasło."}), 401
 
     expires = timedelta(hours=8)
-    token = create_access_token(identity=user.id, expires_delta=expires)
+    token = create_access_token(identity=str(user.id))
     return jsonify({"access_token": token, "username": user.username}), 200
 
 

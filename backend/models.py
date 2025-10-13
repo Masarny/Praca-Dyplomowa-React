@@ -1,6 +1,7 @@
 from database import db
 from datetime import datetime
 
+
 class User(db.Model):
     __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
@@ -10,9 +11,9 @@ class User(db.Model):
 
 
 class StoredPassword(db.Model):
-    __tablename__ = "stored_password"
     id = db.Column(db.Integer, primary_key=True)
-    site = db.Column(db.String(255), nullable=False)
-    login = db.Column(db.String(255), nullable=False)
-    password_encrypted = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    site = db.Column(db.String(255), nullable=False)
+    login = db.Column(db.String(255))
+    password = db.Column(db.String(255), nullable=False)
+    notes = db.Column(db.Text)
