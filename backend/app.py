@@ -1,279 +1,198 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, send_from_directory, jsonify, request
 from flask_cors import CORS
-import secrets
-import string
-import random
-import json
-import re
+from database import db
+from auth import auth_bp
+from passwords import passwords_bp
+from translation import polish, translate_crack_time_string
 from zxcvbn import zxcvbn
-from zxcvbn.matching import add_frequency_lists
-from translation import polish, translate_crack_time_string  # zakładam, że masz te pliki w katalogu app/
+import string, secrets, random, re, math
+import os
 
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
+
+
 CORS(app)
 
 
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///data.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dev_jwt_secret_change_me")
+
+
+db.init_app(app)
+
+
+from flask_jwt_extended import JWTManager
+jwt = JWTManager(app)
+
+
+app.register_blueprint(auth_bp, url_prefix="/api/auth")
+app.register_blueprint(passwords_bp, url_prefix="/api/passwords")
+
+
+with app.app_context():
+    db.create_all()
+
+
 @app.route("/")
-def serve_react_app():
-    return send_from_directory(app.static_folder, "index.html")
+def serve_index():
+    try:
+        return send_from_directory(app.static_folder, "index.html")
+    except Exception:
+        return jsonify({"status": "ok"}), 200
 
 
 @app.route("/api/generate")
 def generate_password():
     try:
         length = int(request.args.get("length", 24))
-    except ValueError:
+    except (TypeError, ValueError):
         return jsonify({"error": "Invalid length"}), 400
-
-    if length < 8 or length > 128:
-        return jsonify({"error": "Length must be between 8 and 128"}), 400
+    if length < 4 or length > 256:
+        return jsonify({"error": "Length range 4..256"}), 400
 
     alphabet = string.ascii_letters + string.digits + string.punctuation
-
-    password = "".join(secrets.choice(alphabet) for _ in range(length))
-
-    return jsonify({"password": password})
+    return jsonify({"password": "".join(secrets.choice(alphabet) for _ in range(length))})
 
 
 @app.route("/api/generate_diceware")
 def generate_diceware():
     try:
         count = int(request.args.get("count", 5))
-    except ValueError:
+    except (TypeError, ValueError):
         return jsonify({"error": "Invalid count"}), 400
-
     if count < 1 or count > 32:
-        return jsonify({"error": "Count must be between 1 and 32"}), 400
+        return jsonify({"error": "Count between 1 and 32"}), 400
 
-    sep_param = request.args.get("sep", "space").lower()
-    sep_map = {
-        "space": " ",
-        "dash": "-",
-        "underscore": "_",
-        "slash": "/",
-    }
-
+    sep_param = (request.args.get("sep") or "space").lower()
+    sep_map = {"space":" ", "dash":"-", "underscore":"_", "slash":"/"}
     if sep_param == "random":
         separator = random.choice(list(sep_map.values()))
     else:
         separator = sep_map.get(sep_param)
-
     if separator is None:
         return jsonify({"error": "Invalid separator"}), 400
 
-    DICEWARE_WORDS = {}
+    dice_path = os.path.join("dicts", "dice-directory.txt")
+    D = {}
 
     try:
-        with open("dicts/dice-directory.txt", "r", encoding="utf-8") as f:
+        with open(dice_path, encoding="utf-8") as f:
             for line in f:
                 parts = line.strip().split()
                 if len(parts) >= 2:
-                    key, word = parts[0], parts[1]
-                    DICEWARE_WORDS[key] = word
+                    D[parts[0]] = parts[1]
     except FileNotFoundError:
-        return jsonify({"error": "Diceware dictionary file not found"}), 500
-    
+        return jsonify({"error":"Missing dice list file"}), 500
+
     words = []
 
     for _ in range(count):
         while True:
-            key = "".join(str(random.randint(1, 6)) for _ in range(5))
-            if key in DICEWARE_WORDS:
-                words.append(DICEWARE_WORDS[key])
-                break
+            key = "".join(str(random.randint(1,6)) for _ in range(5))
+            if key in D:
+                words.append(D[key]); break
 
-    password = separator.join(words)
-
-    return jsonify({
-        "password": password,
-        "separator_used": separator  # frontend może to wyświetlić, jeśli chcesz
-    })
+    return jsonify({"password": separator.join(words)})
 
 
 @app.route("/api/test_password", methods=["POST"])
 def test_password():
-    import math
-    from zxcvbn import zxcvbn
-    import json
-
-    data = request.json or {}
+    data = request.get_json() or {}
     password = data.get("password", "")
-
     if not password:
-        return jsonify({"error": "Password is required"}), 400
+        return jsonify({"error":"Password required"}), 400
 
     try:
-        from translation import polish as polish_translations, translate_crack_time_string
+        res = zxcvbn(password)
+        z_score = int(res.get("score",0))
+        z_feedback = res.get("feedback",{}) or {}
+        z_crack = res.get("crack_times_display",{}).get("offline_slow_hashing_1e4_per_second","Unknown")
     except Exception:
-        polish_translations = {
-            "warning": {
-                "straight_rows_of_keys": "Unikaj prostych sekwencji klawiszy jak 'qwerty'.",
-                "key_pattern": "Unikaj wzorców na klawiaturze.",
-                "simple_repeat": "Hasło zawiera powtarzające się znaki.",
-                "repeated_pattern": "Hasło składa się z powtórzeń wzorca.",
-                "digits_only": "Hasło składa się tylko z cyfr.",
-                "common_words": "Hasło zawiera powszechne słowa."
-            },
-            "suggestions": {
-                "use_a_longer_password": "Użyj dłuższego hasła.",
-                "add_another_word": "Dodaj kolejne słowo.",
-                "capitalize_different_letters": "Zmieniaj wielkość liter w losowych miejscach.",
-                "add_numbers_or_symbols": "Dodaj cyfry lub symbole.",
-                "avoid_common_words": "Unikaj powszechnych słów i fraz."
-            }
-        }
-
-        def translate_crack_time_string(s):
-            if not isinstance(s, str):
-                return s
-            mapping = {
-                "less than a second": "mniej niż sekunda",
-                "seconds": "sekundy",
-                "minutes": "minuty",
-                "hours": "godziny",
-                "days": "dni",
-                "months": "miesiące",
-                "centuries": "stulecia",
-                "Unknown": "Nieznany"
-            }
-            for en, pl in mapping.items():
-                if en in s:
-                    return s.replace(en, pl)
-            return s
+        z_score = 0; z_feedback = {}; z_crack = "Unknown"
 
     words = re.findall(r"[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", password)
     word_count = len(words)
 
-    try:
-        result = zxcvbn(password)
-        z_score = int(result.get("score", 0))  # 0..4
-        z_feedback = result.get("feedback", {}) or {}
-        z_crack_time = result.get("crack_times_display", {}).get("offline_slow_hashing_1e4_per_second", "Unknown")
-    except Exception:
-        z_score = 0
-        z_feedback = {}
-        z_crack_time = "Unknown"
-
     if word_count >= 3:
-        entropy = math.log2((7776) ** word_count)
-        if entropy < 40:
-            score = 1
-        elif entropy < 60:
-            score = 2
-        elif entropy < 80:
-            score = 3
-        else:
-            score = 4
-        crack_time = f"{round(entropy, 1)} bity entropii"
+        entropy = math.log2(7776 ** word_count)
+        if entropy < 40: score = 1
+        elif entropy < 60: score = 2
+        elif entropy < 80: score = 3
+        else: score = 4
+        crack_time = f"{round(entropy,1)} bity entropii"
     else:
         score = z_score
-        crack_time = translate_crack_time_string(z_crack_time)
+        try:
+            crack_time = translate_crack_time_string(z_crack)
+        except Exception:
+            crack_time = z_crack
 
     warnings = []
     suggestions = []
-
     z_warn = z_feedback.get("warning")
     z_sugs = z_feedback.get("suggestions", [])
 
-    def translate_warning(w):
-        if not w:
-            return None
-        if isinstance(w, str):
-            for key, val in polish_translations.get("warning", {}).items():
-                if key.replace('_', ' ') in w.lower() or key in w:
-                    return val
-            return w
+    try:
+        trans = __import__('translation').polish
+    except Exception:
+        trans = {"warning":{}, "suggestions":{}}
 
-    def translate_suggestion(s):
-        if not s:
-            return None
-        for key, val in polish_translations.get("suggestions", {}).items():
-            if key.replace('_', ' ') in s.lower() or key in s:
-                return val
-        return s
+    def translate_msg(m, map_dict):
+        if not m: return None
+        if m in map_dict: return map_dict[m]
+        low = m.lower()
+        for k,v in map_dict.items():
+            if k.lower() in low: return v
+        return m
 
-    if isinstance(z_warn, list):
-        for w in z_warn:
-            tw = translate_warning(w)
-            if tw:
-                warnings.append(tw)
-    elif isinstance(z_warn, str) and z_warn:
-        tw = translate_warning(z_warn)
-        if tw:
-            warnings.append(tw)
+    for w in (z_warn if isinstance(z_warn,list) else ([z_warn] if z_warn else [])):
+        t = translate_msg(w, trans.get("warning", {})); 
+        if t: warnings.append(t)
 
-    if isinstance(z_sugs, list):
-        for s in z_sugs:
-            ts = translate_suggestion(s)
-            if ts:
-                suggestions.append(ts)
+    for s in z_sugs:
+        t = translate_msg(s, trans.get("suggestions", {})); 
+        if t: suggestions.append(t)
 
-    if len(password) < 8:
-        suggestions.append("Użyj co najmniej 8 znaków.")
-    if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password):
-        suggestions.append("Dodaj wielkie litery.")
-    if not re.search(r"\d", password):
-        suggestions.append("Dodaj co najmniej jedną cyfrę.")
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
-    if word_count >= 3:
-        suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
-    if word_count > 12:
-        warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
+    if len(password) < 8: suggestions.append("Użyj co najmniej 8 znaków.")
+    if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password): suggestions.append("Dodaj wielkie litery.")
+    if not re.search(r"\d", password): suggestions.append("Dodaj co najmniej jedną cyfrę.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
+    if word_count >= 3: suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
+    if word_count > 12: warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
 
-    def uniq_preserve(seq):
-        seen = set()
-        out = []
-        for item in seq:
-            if item not in seen:
-                seen.add(item)
-                out.append(item)
+    def uniq(seq):
+        seen=set(); out=[]
+        for x in seq:
+            if x not in seen:
+                seen.add(x); out.append(x)
         return out
 
-    warnings = uniq_preserve(warnings) or ["Brak ostrzeżeń!"]
-    suggestions = uniq_preserve(suggestions) or ["Brak sugestii!"]
-
-    labels = ["Bardzo słabe", "Słabe", "Średnie", "Silne", "Bardzo silne"]
-    score = max(0, min(4, int(score)))
-    strength_label = labels[score]
-
-    return jsonify({
-        "strength": strength_label,
-        "score": score,
-        "warnings": warnings,
-        "suggestions": suggestions,
-        "crack_time": crack_time
-    })
+    warnings = uniq(warnings) or ["Brak ostrzeżeń!"]
+    suggestions = uniq(suggestions) or ["Brak sugestii!"]
+    labels = ["Bardzo słabe","Słabe","Średnie","Silne","Bardzo silne"]
+    score = max(0,min(4,int(score)))
+    return jsonify({"strength": labels[score], "score": score, "warnings": warnings, "suggestions": suggestions, "crack_time": crack_time})
 
 
 @app.route("/api/guidelines")
 def get_guidelines():
-    guidelines = {
+    return jsonify({
         "Hasła": [
-            "Placeholder.",
-            "Placeholder.",
             "Placeholder.",
             "Placeholder.",
             "Placeholder."
         ],
         "Uwierzytelnianie": [
             "Placeholder.",
-            "Placeholder.",
-            "Placeholder.",
             "Placeholder."
         ],
         "Cyberbezpieczeństwo": [
             "Placeholder.",
-            "Placeholder.",
-            "Placeholder.",
-            "Placeholder.",
             "Placeholder."
         ]
-    }
-    return jsonify(guidelines)
+    })
 
-  
 if __name__ == "__main__":
     app.run(debug=True)
-

@@ -1,6 +1,5 @@
 import re
 
-# 🔠 Główne słowniki tłumaczeń ostrzeżeń i sugestii
 polish = {
     "warning": {
         "Straight rows of keys are easy to guess.": "Sekwencje klawiszy w jednym rzędzie są łatwe do odgadnięcia.",
@@ -45,7 +44,6 @@ polish = {
     }
 }
 
-# 🕓 Polskie odmiany jednostek czasu
 time_translations = {
     "second": ["sekunda", "sekundy", "sekund"],
     "minute": ["minuta", "minuty", "minut"],
@@ -58,7 +56,6 @@ time_translations = {
 
 
 def get_polish_plural(word, number):
-    """Zwraca poprawną formę liczby mnogiej w języku polskim."""
     if word not in time_translations:
         return word
 
@@ -72,9 +69,6 @@ def get_polish_plural(word, number):
 
 
 def translate_crack_time_string(english_string):
-    """
-    Tłumaczy tekst typu '3 seconds' lub 'centuries' na język polski.
-    """
     english_string = english_string.lower().strip()
 
     if "less than" in english_string:
@@ -85,7 +79,7 @@ def translate_crack_time_string(english_string):
 
     match = re.match(r"(?P<number>\d+)\s(?P<unit>\w+)", english_string)
     if not match:
-        return english_string  # nieznany format
+        return english_string 
 
     number = int(match.group("number"))
     unit = match.group("unit").rstrip("s")

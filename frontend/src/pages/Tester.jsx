@@ -55,10 +55,10 @@ export default function Tester() {
       {strength && (
         <div style={{ marginTop: "20px", textAlign: "left" }}>
           <p>
-            <strong>💪 Siła hasła:</strong> {strength}
+            <strong>Siła hasła:</strong> {strength}
           </p>
 
-          <h3>⚠️ Ostrzeżenia:</h3>
+          <h3>Ostrzeżenia:</h3>
           <ul style={{ paddingLeft: "20px" }}>
             {warnings.length > 0 ? (
               warnings.map((w, i) => <li key={i}>{w}</li>)
@@ -67,7 +67,7 @@ export default function Tester() {
             )}
           </ul>
 
-          <h3>💡 Sugestie:</h3>
+          <h3>Sugestie:</h3>
           <ul style={{ paddingLeft: "20px" }}>
             {suggestions.length > 0 ? (
               suggestions.map((s, i) => <li key={i}>{s}</li>)
@@ -76,7 +76,7 @@ export default function Tester() {
             )}
           </ul>
 
-          <h3>⏱️ Szacowany czas złamania:</h3>
+          <h3>Szacowany czas złamania:</h3>
           <p>{crackTime}</p>
         </div>
       )}

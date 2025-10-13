@@ -9,6 +9,11 @@ export default function Creator() {
   const [error, setError] = useState(null);
   const [separator, setSeparator] = useState("dash");
   const [copied, setCopied] = useState(false);
+  const [site, setSite] = useState("");
+  const [login, setLogin] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const token = localStorage.getItem("token");
 
   const generatePassword = async () => {
     setLoading(true);
@@ -49,6 +54,47 @@ export default function Creator() {
     } catch (e) {
       console.error("Copy failed", e);
       setError("Copy failed");
+    }
+  };
+
+  // ✅ NOWA FUNKCJA: zapisuje hasło do bazy użytkownika
+  const handleSavePassword = async () => {
+    if (!token) {
+      alert("Musisz się zalogować, aby zapisać hasło.");
+      return;
+    }
+    if (!site || !login || !password) {
+      alert("Podaj stronę, login i wygeneruj hasło przed zapisaniem.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch("/api/passwords/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          site: site.trim(),
+          login: login.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Błąd zapisu hasła.");
+
+      alert("Hasło zapisane pomyślnie!");
+      setSite("");
+      setLogin("");
+      setPassword("");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Nie udało się zapisać hasła.");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -110,15 +156,9 @@ export default function Creator() {
       )}
 
       <div>
-        <button
-          className="btn"
-          onClick={generatePassword}
-          disabled={loading}
-          style={{ flex: 1 }}
-        >
+        <button className="btn" onClick={generatePassword} disabled={loading}>
           {loading ? "Tworzenie hasła..." : "Utwórz hasło"}
         </button>
-
         <button
           className="btn"
           onClick={() => {
@@ -126,7 +166,6 @@ export default function Creator() {
             setError(null);
             setCopied(false);
           }}
-          style={{ flex: 1 }}
         >
           Resetuj
         </button>
@@ -156,14 +195,26 @@ export default function Creator() {
         </button>
       </div>
 
-      <div>
-        <button className="btn" onClick={() => alert("Save placeholder - not implemented")}>
-          Zapisz Hasło
+      {/* 🔹 DODANE POLA DO ZAPISU */}
+      <div style={{ marginTop: 20 }}>
+        <input
+          placeholder="Strona (np. gmail.com)"
+          value={site}
+          onChange={(e) => setSite(e.target.value)}
+        />
+        <input
+          placeholder="Login / adres e-mail"
+          value={login}
+          onChange={(e) => setLogin(e.target.value)}
+        />
+        <button className="btn" onClick={handleSavePassword} disabled={saving}>
+          {saving ? "Zapisywanie..." : "Zapisz Hasło"}
         </button>
       </div>
 
-      <Link to="/main"><button className="btn">Powrót</button></Link>
-
+      <Link to="/main">
+        <button className="btn">Powrót</button>
+      </Link>
     </div>
   );
 }

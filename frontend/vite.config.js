@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173, // frontend
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:5000", // backend Flask
+        target: "http://127.0.0.1:5000",
         changeOrigin: true,
         secure: false
       }
