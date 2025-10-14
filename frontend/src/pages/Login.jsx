@@ -139,7 +139,7 @@ export default function Login() {
           setUsername("");
           setPassword("");
         }}
-        style={{ marginTop: "10px", background: "#888" }}
+        style={{ marginTop: "10px"}}
       >
         {isRegister
           ? "Masz już konto? Zaloguj się"

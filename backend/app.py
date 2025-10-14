@@ -17,7 +17,7 @@ CORS(app, origins=["http://localhost:5173"])
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///data.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dev_jwt_secret_change_me")
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dupa")
 
 
 db.init_app(app)
@@ -155,6 +155,33 @@ def test_password():
         t = translate_msg(s, trans.get("suggestions", {})); 
         if t: suggestions.append(t)
 
+    common_patterns = ["password", "qwerty", "12345", "admin", "letmein", "welcome", "abc123"]
+    for pat in common_patterns:
+        if pat.lower() in password.lower():
+            warnings.append(f"Hasło zawiera popularny wzorzec: '{pat}'.")
+
+    if len(set(password)) < len(password) / 2:
+        warnings.append("Zbyt wiele powtarzających się znaków — zwiększ różnorodność.")
+
+    charset_size = 0
+    if re.search(r"[a-z]", password): charset_size += 26
+    if re.search(r"[A-Z]", password): charset_size += 26
+    if re.search(r"\d", password): charset_size += 10
+    if re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): charset_size += 20
+    if charset_size > 0:
+        estimated_entropy = math.log2(charset_size ** len(password))
+        suggestions.append(f"Szacowana entropia: ok. {round(estimated_entropy,1)} bitów.")
+
+    keyboard_patterns = ["qwerty", "asdf", "zxcv", "1234", "0987"]
+    for seq in keyboard_patterns:
+        if seq in password.lower():
+            warnings.append(f"Unikaj sekwencji klawiaturowych jak '{seq}'.")
+
+    weak_words = ["haslo", "tajne", "moje", "user", "login", "kot", "pies"]
+    for w in weak_words:
+        if re.search(rf"\b{w}\b", password.lower()):
+            warnings.append(f"Hasło zawiera łatwe do odgadnięcia słowo: '{w}'.")
+
     if len(password) < 8: suggestions.append("Użyj co najmniej 8 znaków.")
     if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password): suggestions.append("Dodaj wielkie litery.")
     if not re.search(r"\d", password): suggestions.append("Dodaj co najmniej jedną cyfrę.")
@@ -173,7 +200,14 @@ def test_password():
     suggestions = uniq(suggestions) or ["Brak sugestii!"]
     labels = ["Bardzo słabe","Słabe","Średnie","Silne","Bardzo silne"]
     score = max(0,min(4,int(score)))
-    return jsonify({"strength": labels[score], "score": score, "warnings": warnings, "suggestions": suggestions, "crack_time": crack_time})
+
+    return jsonify({
+        "strength": labels[score],
+        "score": score,
+        "warnings": warnings,
+        "suggestions": suggestions,
+        "crack_time": crack_time
+    })
 
 
 @app.route("/api/guidelines")
@@ -193,6 +227,32 @@ def get_guidelines():
             "Placeholder."
         ]
     })
+
+
+@app.route("/api/improve_password", methods=["POST"])
+def improve_password():
+    data = request.get_json() or {}
+    password = data.get("password", "")
+    if not password:
+        return jsonify({"error": "Brak hasła do ulepszenia."}), 400
+
+    additions = []
+    if not any(c.isdigit() for c in password):
+        additions.append(str(random.randint(10, 99)))
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        additions.append(random.choice(["@", "#", "$", "%", "&", "!", "*"]))
+    if not any(c.isupper() for c in password):
+        additions.append(random.choice(["X", "Z", "Q", "W"]))
+    if len(password) < 12:
+        additions.append(random.choice(["_secure", "_safe", "_pro"]))
+
+    improved = password + "".join(additions)
+
+    improved_list = list(improved)
+    random.shuffle(improved_list)
+    improved = "".join(improved_list)
+
+    return jsonify({"improved_password": improved})
 
 
 if __name__ == "__main__":

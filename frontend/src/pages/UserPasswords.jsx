@@ -9,6 +9,8 @@ export default function UserPasswords() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editData, setEditData] = useState({ site: "", login: "", password: "", notes: "" });
 
   const token = localStorage.getItem("token");
 
@@ -65,6 +67,59 @@ export default function UserPasswords() {
     }
   };
 
+  const handleEditClick = (entry) => {
+    setEditingId(entry.id);
+    setEditData({
+      site: entry.site,
+      login: entry.login,
+      password: entry.password,
+      notes: entry.notes,
+    });
+  };
+
+  const handleEditChange = (field, value) => {
+    setEditData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleEditSave = async (id) => {
+    try {
+      const res = await fetch(`/api/passwords/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editData),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Błąd aktualizacji hasła");
+
+      setEditingId(null);
+      fetchPasswords();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Czy na pewno chcesz usunąć to hasło?")) return;
+
+    try {
+      const res = await fetch(`/api/passwords/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Błąd usuwania hasła");
+
+      fetchPasswords();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="container">
       <h2>Twoje zapisane hasła</h2>
@@ -78,21 +133,73 @@ export default function UserPasswords() {
             <th>Login</th>
             <th>Hasło</th>
             <th>Notatki</th>
+            <th>Akcje</th>
           </tr>
         </thead>
         <tbody>
           {passwords.length > 0 ? (
             passwords.map((p) => (
               <tr key={p.id}>
-                <td>{p.site}</td>
-                <td>{p.login}</td>
-                <td>{p.password}</td>
-                <td>{p.notes}</td>
+                {editingId === p.id ? (
+                  <>
+                    <td>
+                      <input
+                        type="text"
+                        value={editData.site}
+                        onChange={(e) => handleEditChange("site", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={editData.login}
+                        onChange={(e) => handleEditChange("login", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="text"
+                        value={editData.password}
+                        onChange={(e) => handleEditChange("password", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <textarea
+                        rows="2"
+                        value={editData.notes}
+                        onChange={(e) => handleEditChange("notes", e.target.value)}
+                      />
+                    </td>
+                    <td>
+                      <button className="btn" onClick={() => handleEditSave(p.id)}>
+                        💾 Zapisz
+                      </button>
+                      <button className="btn" onClick={() => setEditingId(null)}>
+                        ❌ Anuluj
+                      </button>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td>{p.site}</td>
+                    <td>{p.login}</td>
+                    <td>{p.password}</td>
+                    <td>{p.notes}</td>
+                    <td>
+                      <button className="btn" onClick={() => handleEditClick(p)}>
+                        ✏️ Edytuj
+                      </button>
+                      <button className="btn" onClick={() => handleDelete(p.id)}>
+                        🗑️ Usuń
+                      </button>
+                    </td>
+                  </>
+                )}
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="4" style={{ textAlign: "center" }}>
+              <td colSpan="5" style={{ textAlign: "center" }}>
                 Brak zapisanych haseł.
               </td>
             </tr>
