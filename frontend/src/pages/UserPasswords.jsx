@@ -171,11 +171,11 @@ export default function UserPasswords() {
                       />
                     </td>
                     <td>
-                      <button className="btn" onClick={() => handleEditSave(p.id)}>
-                        💾 Zapisz
+                      <button onClick={() => handleEditSave(p.id)}>
+                        Zapisz
                       </button>
-                      <button className="btn" onClick={() => setEditingId(null)}>
-                        ❌ Anuluj
+                      <button onClick={() => setEditingId(null)}>
+                        Anuluj
                       </button>
                     </td>
                   </>
@@ -186,11 +186,11 @@ export default function UserPasswords() {
                     <td>{p.password}</td>
                     <td>{p.notes}</td>
                     <td>
-                      <button className="btn" onClick={() => handleEditClick(p)}>
-                        ✏️ Edytuj
+                      <button className="btn-db" onClick={() => handleEditClick(p)}>
+                        Edytuj
                       </button>
-                      <button className="btn" onClick={() => handleDelete(p.id)}>
-                        🗑️ Usuń
+                      <button className="btn-db" onClick={() => handleDelete(p.id)}>
+                        Usuń
                       </button>
                     </td>
                   </>
@@ -230,7 +230,7 @@ export default function UserPasswords() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <textarea
+        <textarea style={{ marginTop: "15px" }}
           placeholder="Notatki (opcjonalne)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

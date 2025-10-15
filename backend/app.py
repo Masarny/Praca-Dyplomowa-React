@@ -97,6 +97,59 @@ def generate_diceware():
     return jsonify({"password": separator.join(words)})
 
 
+@app.route("/api/generate_from_phrase", methods=["POST"])
+def generate_from_phrase():
+    data = request.get_json() or {}
+    phrase = data.get("phrase", "").strip()
+    if not phrase:
+        return jsonify({"error": "Brak zdania wejściowego."}), 400
+
+    phrase = re.sub(r"\s+", " ", phrase)
+
+    specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "="]
+    separator = random.choice(["_", "-", "@"])  # separator między słowami
+
+    words = phrase.split(" ")
+    password = separator.join(words)
+
+    def smart_case(word):
+        result = ""
+        for ch in word:
+            if ch.isalpha():
+                if random.random() < 0.25:
+                    result += ch.upper()
+                else:
+                    result += ch.lower()
+            else:
+                result += ch
+        return result
+
+    password = separator.join(smart_case(w) for w in words)
+
+    prefix = random.choice(specials) if random.random() < 0.7 else ""
+    suffix = ""
+
+    if random.random() < 0.9:
+        suffix += str(random.randint(10, 9999))
+    if random.random() < 0.8:
+        suffix += random.choice(specials)
+
+    strong_password = f"{prefix}{password}{suffix}"
+
+    if not any(c.isdigit() for c in strong_password):
+        strong_password += str(random.randint(1, 99))
+    if not re.search(r"[!@#$%^&*()_+=\-]", strong_password):
+        strong_password += random.choice(specials)
+    if not any(c.isupper() for c in strong_password):
+        chars = list(strong_password)
+        for i in range(0, len(chars), max(1, len(chars)//6)):
+            if chars[i].isalpha():
+                chars[i] = chars[i].upper()
+        strong_password = "".join(chars)
+
+    return jsonify({"password": strong_password})
+
+
 @app.route("/api/test_password", methods=["POST"])
 def test_password():
     data = request.get_json() or {}
@@ -213,18 +266,25 @@ def test_password():
 @app.route("/api/guidelines")
 def get_guidelines():
     return jsonify({
-        "Hasła": [
-            "Placeholder.",
-            "Placeholder.",
-            "Placeholder."
+        "Cyberbezpieczeństwo": [
+            "Placeholder cyberbezpieczeństwo 1.",
+            "Placeholder cyberbezpieczeństwo 2.",
+            "Placeholder cyberbezpieczeństwo 3."
+        ],
+        "Bezpieczne Hasła": [
+            "Placeholder bezpieczne hasła 1.",
+            "Placeholder bezpieczne hasła 2.",
+            "Placeholder bezpieczne hasła 3."
         ],
         "Uwierzytelnianie": [
-            "Placeholder.",
-            "Placeholder."
+            "Placeholder uwierzytelnianie 1.",
+            "Placeholder uwierzytelnianie 2.",
+            "Placeholder uwierzytelnianie 3."
         ],
-        "Cyberbezpieczeństwo": [
-            "Placeholder.",
-            "Placeholder."
+        "Ogólne": [
+            "Placeholder ogólne 1.",
+            "Placeholder ogólne 2.",
+            "Placeholder ogólne 3."
         ]
     })
 
@@ -232,27 +292,43 @@ def get_guidelines():
 @app.route("/api/improve_password", methods=["POST"])
 def improve_password():
     data = request.get_json() or {}
-    password = data.get("password", "")
+    password = data.get("password", "").strip()
     if not password:
         return jsonify({"error": "Brak hasła do ulepszenia."}), 400
 
-    additions = []
-    if not any(c.isdigit() for c in password):
-        additions.append(str(random.randint(10, 99)))
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        additions.append(random.choice(["@", "#", "$", "%", "&", "!", "*"]))
-    if not any(c.isupper() for c in password):
-        additions.append(random.choice(["X", "Z", "Q", "W"]))
-    if len(password) < 12:
-        additions.append(random.choice(["_secure", "_safe", "_pro"]))
+    specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "+", "?"]
+    letters = string.ascii_uppercase
+    digits = "0123456789"
 
-    improved = password + "".join(additions)
+    improved = password  # zachowaj oryginalne hasło
 
-    improved_list = list(improved)
-    random.shuffle(improved_list)
-    improved = "".join(improved_list)
+    if not any(c.isupper() for c in improved):
+        improved = re.sub(r"([a-z])", lambda m: m.group(1).upper(), improved, count=1)
 
-    return jsonify({"improved_password": improved})
+    if not any(c.isdigit() for c in improved):
+        improved += random.choice(digits)
+
+    if not re.search(r"[!@#$%^&*()_+\-?]", improved):
+        improved += random.choice(specials)
+
+    prefix = ""
+    suffix = ""
+
+    if random.random() < 0.5:
+        prefix = random.choice(specials) + random.choice(letters)
+    else:
+        suffix += random.choice(letters) + random.choice(specials)
+
+    suffix += str(random.randint(1000, 9999))
+
+    if len(improved + prefix + suffix) < 14:
+        suffix += random.choice(letters) + random.choice(digits) + random.choice(specials)
+
+    improved_password = f"{prefix}{improved}{suffix}"
+
+    improved_password = re.sub(r"\s+", "_", improved_password)
+
+    return jsonify({"improved_password": improved_password})
 
 
 if __name__ == "__main__":

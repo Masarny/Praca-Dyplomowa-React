@@ -12,6 +12,7 @@ export default function Creator() {
   const [site, setSite] = useState("");
   const [login, setLogin] = useState("");
   const [saving, setSaving] = useState(false);
+  const [phrase, setPhrase] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -23,18 +24,25 @@ export default function Creator() {
 
     try {
       let url = "";
+      let options = {};
+
       if (method === "random") {
         url = `/api/generate?length=${length}`;
       } else if (method === "diceware") {
         url = `/api/generate_diceware?count=${length}&sep=${encodeURIComponent(separator)}`;
+      } else if (method === "phrase") {
+        url = `/api/generate_from_phrase`;
+        options = {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phrase }),
+        };
       }
 
-      const res = await fetch(url);
+      const res = await fetch(url, options);
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || `Status ${res.status}`);
-      }
+      if (!res.ok) throw new Error(data.error || `Status ${res.status}`);
 
       setPassword(data.password);
     } catch (err) {
@@ -118,21 +126,38 @@ export default function Creator() {
       >
         <option value="random">Random (Litery, Cyfry, Symbole)</option>
         <option value="diceware">Diceware (Losowe Słowa)</option>
+        <option value="phrase">From phrase (Na podstawie zdania)</option>
       </select>
 
-      <div>
-        <label>
-          Długość hasła: <span style={{ fontWeight: 700 }}>{length}</span>
-        </label>
-        <input
-          type="range"
-          min={min}
-          max={max}
-          value={length}
-          onChange={(e) => setLength(Number(e.target.value))}
-          style={{ width: "100%", marginTop: 8 }}
-        />
-      </div>
+      {method === "phrase" ? (
+        <div style={{ marginTop: 10 }}>
+          <label>Wprowadź swoje zdanie:</label>
+          <textarea
+            placeholder="Np. Mój kot lubi spać na słońcu w maju."
+            value={phrase}
+            onChange={(e) => setPhrase(e.target.value)}
+            rows="3"
+            style={{ width: "100%", marginTop: 6 }}
+          />
+          <small style={{ color: "#666" }}>
+            Z twojego zdania zostanie utworzone silne hasło (z wielkimi literami, cyframi, znakami specjalnymi).
+          </small>
+        </div>
+      ) : (
+        <div>
+          <label>
+            {labelText} <span style={{ fontWeight: 700 }}>{length}</span>
+          </label>
+          <input
+            type="range"
+            min={min}
+            max={max}
+            value={length}
+            onChange={(e) => setLength(Number(e.target.value))}
+            style={{ width: "100%", marginTop: 8 }}
+          />
+        </div>
+      )}
 
       {method === "diceware" && (
         <div>
@@ -164,6 +189,7 @@ export default function Creator() {
             setPassword("");
             setError(null);
             setCopied(false);
+            setPhrase("");
           }}
         >
           Resetuj
