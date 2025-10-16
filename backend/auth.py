@@ -3,7 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from database import db
 from models import User
-from datetime import timedelta, datetime
+from datetime import timedelta
+import traceback
 
 
 auth_bp = Blueprint("auth", __name__)
@@ -21,12 +22,16 @@ def register():
     if User.query.filter_by(username=username).first():
         return jsonify({"error": "Użytkownik już istnieje."}), 400
 
-    hashed = generate_password_hash(password)
-    user = User(username=username, password_hash=hashed)
-    db.session.add(user)
-    db.session.commit()
-
-    return jsonify({"message": "Użytkownik zarejestrował się pomyślnie.", "username": user.username}), 201
+    try:
+        hashed = generate_password_hash(password)
+        user = User(username=username, password_hash=hashed)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify({"message": "Użytkownik zarejestrował się pomyślnie.", "username": user.username}), 201
+    except Exception as e:
+        db.session.rollback()
+        traceback.print_exc()
+        return jsonify({"error": "Błąd rejestracji użytkownika."}), 500
 
 
 @auth_bp.route("/login", methods=["POST"])
@@ -42,14 +47,23 @@ def login():
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Nieprawidłowa nazwa użytkownika lub hasło."}), 401
 
-    expires = timedelta(hours=8)
-    token = create_access_token(identity=str(user.id))
-    return jsonify({"access_token": token, "username": user.username}), 200
+    try:
+        token = create_access_token(identity=str(user.id))
+        return jsonify({"access_token": token, "username": user.username}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": "Błąd generowania tokenu JWT."}), 500
 
 
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-    return jsonify({"username": user.username}), 200
+    try:
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "Użytkownik nie istnieje."}), 404
+        return jsonify({"username": user.username}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": "Błąd pobierania danych użytkownika."}), 500

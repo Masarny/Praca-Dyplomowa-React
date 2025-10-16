@@ -11,6 +11,7 @@ export default function UserPasswords() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({ site: "", login: "", password: "", notes: "" });
+  const [visiblePasswords, setVisiblePasswords] = useState([]); // 👈 nowe
 
   const token = localStorage.getItem("token");
 
@@ -120,6 +121,23 @@ export default function UserPasswords() {
     }
   };
 
+  // 👇 nowa funkcja: pokaż/ukryj hasło
+  const togglePasswordVisibility = (id) => {
+    setVisiblePasswords((prev) =>
+      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+    );
+  };
+
+  // 👇 nowa funkcja: kopiuj hasło
+  const handleCopyPassword = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert("Hasło skopiowane do schowka!");
+    } catch {
+      alert("Nie udało się skopiować hasła.");
+    }
+  };
+
   return (
     <div className="container">
       <h2>Twoje zapisane hasła</h2>
@@ -171,19 +189,31 @@ export default function UserPasswords() {
                       />
                     </td>
                     <td>
-                      <button onClick={() => handleEditSave(p.id)}>
-                        Zapisz
-                      </button>
-                      <button onClick={() => setEditingId(null)}>
-                        Anuluj
-                      </button>
+                      <button onClick={() => handleEditSave(p.id)}>Zapisz</button>
+                      <button onClick={() => setEditingId(null)}>Anuluj</button>
                     </td>
                   </>
                 ) : (
                   <>
                     <td>{p.site}</td>
                     <td>{p.login}</td>
-                    <td>{p.password}</td>
+                    <td>
+                      {visiblePasswords.includes(p.id)
+                        ? p.password
+                        : "••••••••"}
+                      <button
+                        className="btn-db"
+                        onClick={() => togglePasswordVisibility(p.id)}
+                      >
+                        {visiblePasswords.includes(p.id) ? "Ukryj" : "Pokaż"}
+                      </button>
+                      <button
+                        className="btn-db"
+                        onClick={() => handleCopyPassword(p.password)}
+                      >
+                        Kopiuj
+                      </button>
+                    </td>
                     <td>{p.notes}</td>
                     <td>
                       <button className="btn-db" onClick={() => handleEditClick(p)}>
@@ -230,7 +260,8 @@ export default function UserPasswords() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <textarea style={{ marginTop: "15px" }}
+        <textarea
+          style={{ marginTop: "15px" }}
           placeholder="Notatki (opcjonalne)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}

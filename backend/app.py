@@ -5,25 +5,24 @@ from auth import auth_bp
 from passwords import passwords_bp
 from translation import polish, translate_crack_time_string
 from zxcvbn import zxcvbn
-import string, secrets, random, re, math
-import os
+import string, secrets, random, re, math, os, traceback
+from datetime import timedelta
+from flask_jwt_extended import JWTManager
+from dotenv import load_dotenv
 
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 
 
-CORS(app, origins=["http://localhost:5173"])
+CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"], supports_credentials=True)
 
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///data.db")
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "dupa")
-
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "super_secret_jwt_key")
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=8)
 
 db.init_app(app)
-
-
-from flask_jwt_extended import JWTManager
 jwt = JWTManager(app)
 
 
@@ -31,16 +30,33 @@ app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(passwords_bp, url_prefix="/api/passwords")
 
 
+load_dotenv()
+
+
 with app.app_context():
     db.create_all()
+
+
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    return jsonify({"error": "Brak nagłówka Authorization lub nieprawidłowy token."}), 401
+
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    return jsonify({"error": "Nieprawidłowy token JWT."}), 422
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({"error": "Token JWT wygasł. Zaloguj się ponownie."}), 401
 
 
 @app.route("/")
 def serve_index():
     try:
         return send_from_directory(app.static_folder, "index.html")
-    except Exception:
-        return jsonify({"status": "ok"}), 200
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"status": "frontend not found", "error": str(e)}), 200
 
 
 @app.route("/api/generate")
@@ -107,7 +123,7 @@ def generate_from_phrase():
     phrase = re.sub(r"\s+", " ", phrase)
 
     specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "="]
-    separator = random.choice(["_", "-", "@"])  # separator między słowami
+    separator = random.choice(["_", "-", "@"])
 
     words = phrase.split(" ")
     password = separator.join(words)
@@ -281,10 +297,10 @@ def get_guidelines():
             "Placeholder uwierzytelnianie 2.",
             "Placeholder uwierzytelnianie 3."
         ],
-        "Ogólne": [
-            "Placeholder ogólne 1.",
-            "Placeholder ogólne 2.",
-            "Placeholder ogólne 3."
+        "Ataki na Użytkowników": [
+            "Placeholder ataki 1.",
+            "Placeholder ataki 2.",
+            "Placeholder ataki 3."
         ]
     })
 
@@ -300,7 +316,7 @@ def improve_password():
     letters = string.ascii_uppercase
     digits = "0123456789"
 
-    improved = password  # zachowaj oryginalne hasło
+    improved = password
 
     if not any(c.isupper() for c in improved):
         improved = re.sub(r"([a-z])", lambda m: m.group(1).upper(), improved, count=1)

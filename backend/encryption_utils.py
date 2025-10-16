@@ -7,7 +7,7 @@ FERNET_KEY = os.environ.get("FERNET_KEY")
 
 def get_fernet():
     if not FERNET_KEY:
-        return None
+        raise RuntimeError("Brak ustawionego klucza FERNET_KEY w zmiennych środowiskowych!")
     return Fernet(FERNET_KEY.encode())
 
 

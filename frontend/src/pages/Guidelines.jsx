@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Guidelines() {
   const [guidelines, setGuidelines] = useState({});
   const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState("Cyberbezpieczeństwo");
+  const [selectedCategory, setSelectedCategory] = useState("Ataki na Użytkowników");
 
   useEffect(() => {
     fetch("/api/guidelines")
@@ -37,7 +37,7 @@ export default function Guidelines() {
         transition={{ duration: 0.6 }}
         className="text-2xl font-bold mb-4"
       >
-        Wytyczne Dotyczące Bezpieczeństwa
+        <p style={{ textAlign: "center" }}> Wytyczne Dotyczące Bezpieczeństwa </p>
       </motion.h2>
 
       <div

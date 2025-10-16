@@ -40,7 +40,6 @@ def add_password():
     user_id = int(get_jwt_identity())
     try:
         data = request.get_json(force=True)
-        print("Odebrano dane JSON:", data)
     except Exception as e:
         print("Błąd parsowania JSON:", e)
         return jsonify({"error": "Niepoprawne dane JSON"}), 400
