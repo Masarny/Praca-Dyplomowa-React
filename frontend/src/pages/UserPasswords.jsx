@@ -121,14 +121,12 @@ export default function UserPasswords() {
     }
   };
 
-  // 👇 nowa funkcja: pokaż/ukryj hasło
   const togglePasswordVisibility = (id) => {
     setVisiblePasswords((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
   };
 
-  // 👇 nowa funkcja: kopiuj hasło
   const handleCopyPassword = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -139,7 +137,7 @@ export default function UserPasswords() {
   };
 
   return (
-    <div className="container">
+    <div className="container_db">
       <h2>Twoje zapisane hasła</h2>
 
       {error && <p style={{ color: "red" }}>{error}</p>}

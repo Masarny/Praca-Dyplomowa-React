@@ -83,14 +83,17 @@ def generate_diceware():
 
     sep_param = (request.args.get("sep") or "space").lower()
     sep_map = {"space":" ", "dash":"-", "underscore":"_", "slash":"/"}
+
     if sep_param == "random":
-        separator = random.choice(list(sep_map.values()))
+        separator = None  # specjalny przypadek — losowy dla każdego odstępu
     else:
         separator = sep_map.get(sep_param)
-    if separator is None:
+
+    if sep_param != "random" and separator is None:
         return jsonify({"error": "Invalid separator"}), 400
 
     dice_path = os.path.join("dicts", "dice-directory.txt")
+
     D = {}
 
     try:
@@ -110,7 +113,16 @@ def generate_diceware():
             if key in D:
                 words.append(D[key]); break
 
-    return jsonify({"password": separator.join(words)})
+    if sep_param == "random":
+        sep_values = list(sep_map.values())
+        password = "".join(
+            word + (random.choice(sep_values) if i < len(words) - 1 else "")
+            for i, word in enumerate(words)
+        )
+    else:
+        password = separator.join(words)
+
+    return jsonify({"password": password})
 
 
 @app.route("/api/generate_from_phrase", methods=["POST"])
@@ -313,34 +325,46 @@ def improve_password():
         return jsonify({"error": "Brak hasła do ulepszenia."}), 400
 
     specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "+", "?"]
-    letters = string.ascii_uppercase
     digits = "0123456789"
 
-    improved = password
+    words = re.split(r"\s+", password)
 
-    if not any(c.isupper() for c in improved):
-        improved = re.sub(r"([a-z])", lambda m: m.group(1).upper(), improved, count=1)
+    def stylize_word(word):
+        if not word:
+            return ""
+        result = ""
+        for i, ch in enumerate(word):
+            if ch.isalpha():
+                if i == 0 or random.random() < 0.3:
+                    result += ch.upper()
+                else:
+                    result += ch.lower()
+            else:
+                result += ch
+        return result
 
-    if not any(c.isdigit() for c in improved):
-        improved += random.choice(digits)
+    styled_words = [stylize_word(w) for w in words]
 
-    if not re.search(r"[!@#$%^&*()_+\-?]", improved):
-        improved += random.choice(specials)
+    separator = random.choice(["_", "-", "@", ""])
+
+    improved_core = separator.join(styled_words)
 
     prefix = ""
     suffix = ""
 
-    if random.random() < 0.5:
-        prefix = random.choice(specials) + random.choice(letters)
-    else:
-        suffix += random.choice(letters) + random.choice(specials)
+    if random.random() < 0.7:
+        prefix = random.choice(specials)
 
-    suffix += str(random.randint(1000, 9999))
+    suffix = str(random.randint(1000, 9999)) + random.choice(specials)
 
-    if len(improved + prefix + suffix) < 14:
-        suffix += random.choice(letters) + random.choice(digits) + random.choice(specials)
+    improved_password = f"{prefix}{improved_core}{suffix}"
 
-    improved_password = f"{prefix}{improved}{suffix}"
+    if not any(c.isdigit() for c in improved_password):
+        improved_password += str(random.randint(1, 99))
+    if not re.search(r"[!@#$%^&*()_+\-?]", improved_password):
+        improved_password += random.choice(specials)
+    if not any(c.isupper() for c in improved_password):
+        improved_password = improved_password[0].upper() + improved_password[1:]
 
     improved_password = re.sub(r"\s+", "_", improved_password)
 
