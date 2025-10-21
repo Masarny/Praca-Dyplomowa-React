@@ -8,8 +8,14 @@ from zxcvbn import zxcvbn
 import string, secrets, random, re, math, os, traceback
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
-from dotenv import load_dotenv
 
+
+from dotenv import load_dotenv
+load_dotenv()
+if not os.environ.get("JWT_SECRET_KEY"):
+    print("Uwaga: Brak JWT_SECRET_KEY w .env – używany klucz domyślny!")
+if not os.environ.get("FERNET_KEY"):
+    print("Uwaga: Brak FERNET_KEY w .env – szyfrowanie haseł nie będzie bezpieczne!")
 
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
 
@@ -28,9 +34,6 @@ jwt = JWTManager(app)
 
 app.register_blueprint(auth_bp, url_prefix="/api/auth")
 app.register_blueprint(passwords_bp, url_prefix="/api/passwords")
-
-
-load_dotenv()
 
 
 with app.app_context():
@@ -92,7 +95,8 @@ def generate_diceware():
     if sep_param != "random" and separator is None:
         return jsonify({"error": "Invalid separator"}), 400
 
-    dice_path = os.path.join("dicts", "dice-directory.txt")
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    dice_path = os.path.join(base_dir, "dicts", "dice-directory.txt")
 
     D = {}
 
@@ -369,6 +373,27 @@ def improve_password():
     improved_password = re.sub(r"\s+", "_", improved_password)
 
     return jsonify({"improved_password": improved_password})
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Globalna obsługa wyjątków"""
+    print("=== Błąd backendu ===")
+    traceback.print_exc()
+
+    # Jeśli to błąd HTTP, zwróć jego kod
+    from werkzeug.exceptions import HTTPException
+    if isinstance(e, HTTPException):
+        return jsonify({
+            "error": e.description,
+            "status": e.code
+        }), e.code
+
+    # Inne błędy — 500 Internal Server Error
+    return jsonify({
+        "error": "Wewnętrzny błąd serwera",
+        "details": str(e)
+    }), 500
 
 
 if __name__ == "__main__":

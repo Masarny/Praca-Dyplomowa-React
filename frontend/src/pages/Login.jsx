@@ -5,11 +5,16 @@ export default function Login() {
   const [step, setStep] = useState(1);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [firstAttempt, setFirstAttempt] = useState({ username: "", password: "" });
+  const [firstAttempt, setFirstAttempt] = useState({ username: "", password: "", success: false });
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  const clearInputs = () => {
+    setUsername("");
+    setPassword("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,8 +39,7 @@ export default function Login() {
         alert("Rejestracja zakończona sukcesem. Możesz się teraz zalogować.");
         setIsRegister(false);
         setStep(1);
-        setUsername("");
-        setPassword("");
+        clearInputs(); // 🔹 CLEAR INPUTS
         setError("");
         setLoading(false);
         return;
@@ -50,25 +54,29 @@ export default function Login() {
         const data = await res.json();
 
         if (!res.ok) {
+          setFirstAttempt({ username: "", password: "", success: false });
           setError(data.error || "Nieprawidłowa nazwa użytkownika lub hasło!");
+          clearInputs(); // 🔹 CLEAR INPUTS
           setLoading(false);
           return;
         }
 
-        setFirstAttempt({ username, password });
-        setUsername("");
-        setPassword("");
+        setFirstAttempt({ username, password, success: true });
         setError("Nieprawidłowa nazwa użytkownika lub hasło!");
         setStep(2);
+        clearInputs(); // 🔹 CLEAR INPUTS
         setLoading(false);
-      } else {
+      } 
+      else {
         if (
           username !== firstAttempt.username ||
-          password !== firstAttempt.password
+          password !== firstAttempt.password ||
+          !firstAttempt.success
         ) {
+          setFirstAttempt({ username: "", password: "", success: false });
+          setStep(1);
           setError("Nieprawidłowa nazwa użytkownika lub hasło!");
-          setUsername("");
-          setPassword("");
+          clearInputs(); // 🔹 CLEAR INPUTS
           setLoading(false);
           return;
         }
@@ -82,6 +90,9 @@ export default function Login() {
 
         if (!res.ok) {
           setError(data.error || "Nieprawidłowa nazwa użytkownika lub hasło!");
+          setFirstAttempt({ username: "", password: "", success: false });
+          setStep(1);
+          clearInputs(); // 🔹 CLEAR INPUTS
           setLoading(false);
           return;
         }
@@ -89,6 +100,7 @@ export default function Login() {
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("username", data.username);
         setError("");
+        clearInputs(); // 🔹 CLEAR INPUTS
         navigate("/main");
       }
     } catch (err) {
@@ -136,10 +148,9 @@ export default function Login() {
           setIsRegister(!isRegister);
           setStep(1);
           setError("");
-          setUsername("");
-          setPassword("");
+          clearInputs(); // 🔹 CLEAR INPUTS
         }}
-        style={{ marginTop: "10px"}}
+        style={{ marginTop: "10px" }}
       >
         {isRegister
           ? "Masz już konto? Zaloguj się"

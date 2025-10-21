@@ -1,11 +1,13 @@
 import os
 from cryptography.fernet import Fernet
+from dotenv import load_dotenv
 
 
-FERNET_KEY = os.environ.get("FERNET_KEY")
+load_dotenv()
 
 
 def get_fernet():
+    FERNET_KEY = os.environ.get("FERNET_KEY")
     if not FERNET_KEY:
         raise RuntimeError("Brak ustawionego klucza FERNET_KEY w zmiennych środowiskowych!")
     return Fernet(FERNET_KEY.encode())

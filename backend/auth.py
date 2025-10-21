@@ -28,7 +28,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         return jsonify({"message": "Użytkownik zarejestrował się pomyślnie.", "username": user.username}), 201
-    except Exception as e:
+    except Exception:
         db.session.rollback()
         traceback.print_exc()
         return jsonify({"error": "Błąd rejestracji użytkownika."}), 500
