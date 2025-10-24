@@ -8,12 +8,51 @@ export default function Login() {
   const [firstAttempt, setFirstAttempt] = useState({ username: "", password: "", success: false });
   const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState("");
+  const [passwordRequirements, setPasswordRequirements] = useState([]); // 🔹 DODANE
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const clearInputs = () => {
     setUsername("");
     setPassword("");
+    setPasswordStrength("");
+    setPasswordRequirements([]);
+  };
+
+  const checkPasswordStrength = (password) => {
+    let strength = 0;
+    if (password.length >= 8) strength++;
+    if (/[A-Z]/.test(password)) strength++;
+    if (/[a-z]/.test(password)) strength++;
+    if (/[0-9]/.test(password)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>_\-+=]/.test(password)) strength++;
+
+    if (strength <= 2) return "Słabe";
+    if (strength === 3 || strength === 4) return "Średnie";
+    if (strength === 5) return "Silne";
+    return "";
+  };
+
+  const getPasswordRequirements = (password) => {
+    const missing = [];
+
+    if (password.length < 8) missing.push("co najmniej 8 znaków");
+    if (!/[A-Z]/.test(password)) missing.push("wielką literę");
+    if (!/[0-9]/.test(password)) missing.push("cyfrę");
+    if (!/[-!@#$%^&*(),.?":{}|<>_+=]/.test(password)) missing.push("znak specjalny");
+
+    return missing;
+  };
+
+  const handlePasswordChange = (e) => {
+    const value = e.target.value;
+    setPassword(value);
+
+    if (isRegister) {
+      setPasswordStrength(checkPasswordStrength(value));
+      setPasswordRequirements(getPasswordRequirements(value)); // 🔹 Aktualizacja listy wymagań
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -23,6 +62,13 @@ export default function Login() {
 
     try {
       if (isRegister) {
+        const missing = getPasswordRequirements(password);
+        if (missing.length > 0) {
+          setError(`Hasło musi zawierać: ${missing.join(", ")}.`);
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch("/api/auth/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -39,7 +85,7 @@ export default function Login() {
         alert("Rejestracja zakończona sukcesem. Możesz się teraz zalogować.");
         setIsRegister(false);
         setStep(1);
-        clearInputs(); // 🔹 CLEAR INPUTS
+        clearInputs();
         setError("");
         setLoading(false);
         return;
@@ -56,7 +102,7 @@ export default function Login() {
         if (!res.ok) {
           setFirstAttempt({ username: "", password: "", success: false });
           setError(data.error || "Nieprawidłowa nazwa użytkownika lub hasło!");
-          clearInputs(); // 🔹 CLEAR INPUTS
+          clearInputs();
           setLoading(false);
           return;
         }
@@ -64,10 +110,9 @@ export default function Login() {
         setFirstAttempt({ username, password, success: true });
         setError("Nieprawidłowa nazwa użytkownika lub hasło!");
         setStep(2);
-        clearInputs(); // 🔹 CLEAR INPUTS
+        clearInputs();
         setLoading(false);
-      } 
-      else {
+      } else {
         if (
           username !== firstAttempt.username ||
           password !== firstAttempt.password ||
@@ -76,7 +121,7 @@ export default function Login() {
           setFirstAttempt({ username: "", password: "", success: false });
           setStep(1);
           setError("Nieprawidłowa nazwa użytkownika lub hasło!");
-          clearInputs(); // 🔹 CLEAR INPUTS
+          clearInputs();
           setLoading(false);
           return;
         }
@@ -92,7 +137,7 @@ export default function Login() {
           setError(data.error || "Nieprawidłowa nazwa użytkownika lub hasło!");
           setFirstAttempt({ username: "", password: "", success: false });
           setStep(1);
-          clearInputs(); // 🔹 CLEAR INPUTS
+          clearInputs();
           setLoading(false);
           return;
         }
@@ -100,7 +145,7 @@ export default function Login() {
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("username", data.username);
         setError("");
-        clearInputs(); // 🔹 CLEAR INPUTS
+        clearInputs();
         navigate("/main");
       }
     } catch (err) {
@@ -127,18 +172,43 @@ export default function Login() {
           type="password"
           placeholder="Hasło"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={handlePasswordChange}
           required
         />
+
+        {isRegister && password && passwordRequirements.length > 0 && (
+          <div style={{ color: "red", marginTop: 5, fontSize: "0.9em" }}>
+            Hasło musi zawierać:{" "}
+            {passwordRequirements.map((req, idx) => (
+              <span key={idx}>
+                {req}
+                {idx < passwordRequirements.length - 1 ? ", " : "."}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {isRegister && password && (
+          <p
+            style={{
+              color:
+                passwordStrength === "Silne"
+                  ? "green"
+                  : passwordStrength === "Średnie"
+                  ? "orange"
+                  : "red",
+              marginTop: 5,
+              fontWeight: "bold",
+            }}
+          >
+            Siła hasła: {passwordStrength}
+          </p>
+        )}
 
         {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
 
         <button className="btn" type="submit" disabled={loading}>
-          {isRegister
-            ? "Zarejestruj się"
-            : step === 1
-            ? "Zaloguj się"
-            : "Zaloguj się"}
+          {isRegister ? "Zarejestruj się" : "Zaloguj się"}
         </button>
       </form>
 
@@ -148,7 +218,7 @@ export default function Login() {
           setIsRegister(!isRegister);
           setStep(1);
           setError("");
-          clearInputs(); // 🔹 CLEAR INPUTS
+          clearInputs();
         }}
         style={{ marginTop: "10px" }}
       >

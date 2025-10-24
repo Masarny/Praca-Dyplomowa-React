@@ -21,7 +21,7 @@ export default function Guidelines() {
 
   if (loading) {
     return (
-      <div className="container">
+      <div className="container" style={{ textAlign: "center", marginTop: "40px" }}>
         <h2>Ładowanie wytycznych...</h2>
       </div>
     );
@@ -30,14 +30,16 @@ export default function Guidelines() {
   const categories = Object.keys(guidelines);
 
   return (
-    <div className="container_guide" style={{ textAlign: "left" }}>
+    <div className="container_guide" style={{ textAlign: "left", padding: "20px" }}>
       <motion.h2
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-2xl font-bold mb-4"
       >
-        <p style={{ textAlign: "center" }}> Wytyczne Dotyczące Bezpieczeństwa </p>
+        <p style={{ textAlign: "center", fontSize: "1.8rem" }}>
+          Wytyczne Dotyczące Bezpieczeństwa
+        </p>
       </motion.h2>
 
       <div
@@ -45,7 +47,8 @@ export default function Guidelines() {
           display: "flex",
           gap: "10px",
           flexWrap: "wrap",
-          marginBottom: "20px",
+          justifyContent: "center",
+          marginBottom: "25px",
         }}
       >
         {categories.map((cat) => (
@@ -54,18 +57,16 @@ export default function Guidelines() {
             onClick={() => setSelectedCategory(cat)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className={`btn ${
-              selectedCategory === cat ? "btn-active" : ""
-            }`}
+            className={`btn ${selectedCategory === cat ? "btn-active" : ""}`}
             style={{
-              backgroundColor:
-                selectedCategory === cat ? "#007BFF" : "#e0e0e0",
+              backgroundColor: selectedCategory === cat ? "#007BFF" : "#e0e0e0",
               color: selectedCategory === cat ? "white" : "black",
               border: "none",
               padding: "10px 20px",
               borderRadius: "8px",
               cursor: "pointer",
               transition: "0.2s",
+              fontWeight: "500",
             }}
           >
             {cat}
@@ -85,23 +86,38 @@ export default function Guidelines() {
             style={{
               background: "#f9f9f9",
               borderRadius: "10px",
-              padding: "20px",
+              padding: "25px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              lineHeight: "1.6",
             }}
           >
-            <h3 style={{ color: "#007BFF" }}>{selectedCategory}</h3>
-            <ul style={{ paddingLeft: "20px" }}>
+            <h3
+              style={{
+                color: "#007BFF",
+                marginBottom: "15px",
+                fontSize: "1.4rem",
+                textAlign: "center",
+              }}
+            >
+              {selectedCategory}
+            </h3>
+
+            <div style={{ color: "#333", fontSize: "1rem" }}>
               {guidelines[selectedCategory]?.map((tip, i) => (
-                <motion.li
+                <motion.p
                   key={i}
-                  whileHover={{ scale: 1.05, color: "#007BFF" }}
+                  whileHover={{ scale: 1.02, color: "#007BFF" }}
                   transition={{ type: "spring", stiffness: 200 }}
-                  style={{ marginBottom: "8px" }}
+                  style={{
+                    marginBottom: "14px",
+                    padding: "8px 0",
+                    borderBottom: "1px solid #e0e0e0",
+                  }}
                 >
                   {tip}
-                </motion.li>
+                </motion.p>
               ))}
-            </ul>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -113,7 +129,19 @@ export default function Guidelines() {
         style={{ textAlign: "center", marginTop: "25px" }}
       >
         <Link to="/main">
-          <button className="btn">Powrót</button>
+          <button
+            className="btn"
+            style={{
+              backgroundColor: "#007BFF",
+              color: "white",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Powrót
+          </button>
         </Link>
       </motion.div>
     </div>

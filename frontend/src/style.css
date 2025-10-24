@@ -6,7 +6,9 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: auto;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .container {
@@ -30,8 +32,9 @@ body {
     text-align: left;
     margin: 40px auto;
     overflow-y: auto;
-    max-height: 90vh;
+    min-height: 100vh;
     scroll-snap-type: y mandatory;
+    padding-bottom: 50px;
 }
 
 .container_db {
