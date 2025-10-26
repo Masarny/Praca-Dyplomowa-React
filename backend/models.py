@@ -8,6 +8,7 @@ class User(db.Model):
     username = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     passwords = db.relationship("StoredPassword", backref="owner", lazy=True)
+    totp_secret = db.Column(db.String(32), nullable=True)
 
 
 class StoredPassword(db.Model):
