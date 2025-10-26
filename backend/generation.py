@@ -82,7 +82,7 @@ def generate_from_phrase():
     phrase = re.sub(r"\s+", " ", phrase)
 
     specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "="]
-    separator = random.choice(["_", "-", "@"])
+    separator = random.choice(["@", "$", "&", "_", "-", "=", " "])
 
     words = phrase.split(" ")
     password = separator.join(words)

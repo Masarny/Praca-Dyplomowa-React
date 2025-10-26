@@ -22,7 +22,7 @@ export default function Login() {
 
   const checkPasswordStrength = (password) => {
     let strength = 0;
-    if (password.length >= 8) strength++;
+    if (password.length >= 15) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;
@@ -37,7 +37,7 @@ export default function Login() {
   const getPasswordRequirements = (password) => {
     const missing = [];
 
-    if (password.length < 8) missing.push("co najmniej 8 znaków");
+    if (password.length < 15) missing.push("co najmniej 15 znaków");
     if (!/[A-Z]/.test(password)) missing.push("wielką literę");
     if (!/[0-9]/.test(password)) missing.push("cyfrę");
     if (!/[-!@#$%^&*(),.?":{}|<>_+=]/.test(password)) missing.push("znak specjalny");

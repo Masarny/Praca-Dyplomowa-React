@@ -6,7 +6,6 @@ from passwords import passwords_bp
 from generation import generation_bp
 from tests import tests_bp
 from guidelines import guidelines_bp
-from translation import polish, translate_crack_time_string
 from zxcvbn import zxcvbn
 import string, secrets, random, re, math, os, traceback
 from datetime import timedelta

@@ -193,7 +193,20 @@ export default function UserPasswords() {
                   </>
                 ) : (
                   <>
-                    <td>{p.site}</td>
+                    <td>
+                      <a
+                        href={
+                          p.site.startsWith("http://") || p.site.startsWith("https://")
+                            ? p.site
+                            : `https://${p.site}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#0077cc", textDecoration: "none", fontWeight: "bold" }}
+                      >
+                        {p.site}
+                      </a>
+                    </td>
                     <td>{p.login}</td>
                     <td>
                       {visiblePasswords.includes(p.id)

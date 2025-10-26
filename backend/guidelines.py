@@ -16,13 +16,13 @@ def get_guidelines():
             "Każde urządzenie podłączone do Internetu może stać się celem ataku, a jego właściciel – ofiarą kradzieży danych, pieniędzy lub tożsamości. "
             "Cyberprzestępcy często wykorzystują nieuwagę, brak wiedzy oraz naiwność zwykłych ludzi, dlatego warto zachować ostrożność w sieci, jak i posiadać odpowiedniom wiedzę. ",
 
-            "Podstawy cyberbezpieczeństwa to m.in.: "
-            "- Stosowanie silnych, unikalnych, ciężkich do odgadnięcia haseł; "
-            "- Weryfikacja dwuetapowa (MFA); "
-            "- Regularna aktualizacja systemu i oprogramowania; "
-            "- Ostrożność przy otwieraniu załączników i linków w e-mailach oraz na stronach internetowych; "
-            "- Korzystanie z bezpiecznych i szyfrowanych sieci Wi-Fi; "
-            "- Korzystanie z oprogramowania antywirusowego oraz antymalware. "
+            "Podstawy cyberbezpieczeństwa to m.in.: ",
+            "- Stosowanie silnych, unikalnych, ciężkich do odgadnięcia haseł; ",
+            "- Weryfikacja dwuetapowa (MFA); ",
+            "- Regularna aktualizacja systemu i oprogramowania; ",
+            "- Ostrożność przy otwieraniu załączników i linków w e-mailach oraz na stronach internetowych; ",
+            "- Korzystanie z bezpiecznych i szyfrowanych sieci Wi-Fi; ",
+            "- Korzystanie z oprogramowania antywirusowego oraz antymalware. ",
             "Warto też pamiętać o regularnym tworzeniu kopii zapasowych najważniejszych dla nas danych. Pomoże to odzyskać je w przypadku awarii lub ataku na nie. ",
 
             "Warto uczyć się cyberbezpieczeństwa, ponieważ świadomość użytkownika jest najlepszą linią obrony przeciwko atakom cyberprzestępców. "
@@ -32,8 +32,8 @@ def get_guidelines():
         "Bezpieczne Hasła": [
             "Silne hasło to takie, które jest trudne do odgadnięcia przez człowieka i trudne do złamania przez komputer. "
             "Każde silne hasło powinno zawierać: wielkie i małe litery, cyfry oraz znaki specjalne. "
-            "Czego nie powinno nigdy podawać w swoim haśle to nasze dane osobiste, takie jak imię, nazwisko, data urodzenia, nazwa ukochanego zwierzaka itp. "
-            "Jedną z najlepszych metod tworzenia haseł jest stworzenie ciągu znaków, który nie ma żadnego sensu językowego i wygląda na oko losowo, np. 'Fr!8xTz#4qR'. "
+            "Czego nie powinno nigdy podawać w swoim haśle to nasze dane osobiste, takie jak imię, nazwisko, data urodzenia, nazwa ukochanego zwierzaka itp. ",
+            "Jedną z najlepszych metod tworzenia haseł jest stworzenie ciągu znaków, który nie ma żadnego sensu językowego i wygląda na oko losowo, np. 'Fr!8xTz#4qR'. ",
             "Inną świetną metodą jest stworzenie hasła z kilku wyrazów, nawet zdania, oddzielając słowa różnymi separatorami, stosując losowo wielkie litery oraz dodając kilka cyfr, np. 'alA-MA555!kOtA369#$'. ",
 
             "Jak tworzyć bezpieczne hasła? ",
@@ -41,7 +41,7 @@ def get_guidelines():
             "- Łącz różne typy znaków: litery, cyfry oraz symbole. ",
             "- Unikaj prostych, popularnych wzorców: '12345', 'qwerty', 'abcd'. ",
             "- Nie używaj tego samego hasła w wielu miejscach. ",
-            "- Używaj menedżera haseł (takiego jak ta aplikacja), który pozwoli ci przechowywać unikalne i silne hasła bez konieczności ich zapamiętywania. "
+            "- Używaj menedżera haseł (takiego jak ta aplikacja), który pozwoli ci przechowywać unikalne i silne hasła bez konieczności ich zapamiętywania. ",
             "Dobrym rozwiązaniem jest też tzw. metoda 'passphrase', czyli hasła z kilku przypadkowych słów lub tworzenie hasła na bazie zdania, które możemy zapamiętać. ",
 
             "Najczęściej stosowane hasła (TOP 25 – UNIKAJ ZA WSZELKĄ CENĘ!): ",
@@ -72,7 +72,7 @@ def get_guidelines():
             "25. qazwsx ",
 
             "Pełna lista najczęściej używanych haseł (aktualizowana corocznie): "
-            "https://cybernews.com/best-password-managers/most-common-passwords/. "
+            "https://cybernews.com/best-password-managers/most-common-passwords/. ",
             "Jeśli używasz któregoś z tych haseł, to natychmiast je zmień! " 
             "Pamiętaj również, że zawsze warto odświeżyć hasłą do ważnych dla nas kont co kilka. "
         ],
@@ -84,10 +84,10 @@ def get_guidelines():
             "Najczęściej spotykane formy uwierzytelniania to: ",
             "- Coś, co wiesz – np. hasło lub PIN. ",
             "- Coś, co masz – np. telefon, karta, token sprzętowy. ",
-            "- Coś, kim jesteś – np. odcisk palca lub rozpoznawanie twarzy. "
+            "- Coś, kim jesteś – np. odcisk palca lub rozpoznawanie twarzy. ",
             "Nowoczesne aplikacje coraz częściej łączą te trzy elementy, zwiększając tym samym bezpieczeństwo logowania. ",
 
-            "W praktyce, najlepszym rozwiązaniem jest "uwierzytelnianie wieloskładnikowe (MFA)", które łączy w sobie kilka metod uwierzytelniania jednocześnie. "
+            "W praktyce, najlepszym rozwiązaniem jest uwierzytelnianie wieloskładnikowe (MFA), które łączy w sobie kilka metod uwierzytelniania jednocześnie. "
             "Na przykład: wpisujemy hasło (pierwszy składnik), a następnie potwierdzamy nasze logowanie kodem dostarczonym na nasz e-mail lub SMS-em (drugi składnik). "
             "Niektóre firmy oferują też logowanie z potwierdzeniem w aplikacji mobilnej bez konieczności wpisywania kodu (np. banki). ",
 
@@ -103,23 +103,23 @@ def get_guidelines():
             "Pamiętaj również, że cyberprzestępcy nie zawsze atakują, wykorzystując technologię, bardzo często korzystają z manipulacji, dobroci i strachu człowieka. ",
 
             "1. Phishing -> jest to oszustwo polegające na podszywaniu się przestępcy pod znane instytucje np. banki, pocztę, sklep internetowy. "
-            "Ofiara ataku dostaje e-mail lub SMS z linkiem prowadzącym do fałszywej strony, gdzie podaje swoje dane logowania lub kartę płatniczą. "
+            "Ofiara ataku dostaje e-mail lub SMS z linkiem prowadzącym do fałszywej strony, gdzie podaje swoje dane logowania lub kartę płatniczą. ",
             "- Jak się bronić: nigdy nie klikaj w podejrzane linki, sprawdzaj adres strony, korzystaj z narzędzi dom sprawdzania linków oraz używaj tylko oficjalnych aplikacji. "
-            "Zawsze zwracaj uwagę, czy adresy stron zaczyna się od 'https://' i czy domena ("nazwa strony") jest poprawna (np. 'bank.com', a nie 'bank_secure_notscam.com'). ",
+            "Zawsze zwracaj uwagę, czy adresy stron zaczyna się od 'https://' i czy domena (nazwa strony) jest poprawna (np. 'bank.com', a nie 'bank_secure_notscam.com'). ",
 
-            "2. Malware –> jest to złośliwe oprogramowanie (np. wirusy, trojany, ransomware), które jest wykorzystywane przez przestępcę do kradzieży naszych danych lub "blokowania" komputera. "
+            "2. Malware –> jest to złośliwe oprogramowanie (np. wirusy, trojany, ransomware), które jest wykorzystywane przez przestępcę do kradzieży naszych danych lub blokowania komputera. ",
             "- Jak się bronić: regularnie aktualizuj swój system, używaj oprogramowania antywirusowego oraz antymalware, nie pobieraj żadnych plików z nieznanych źródeł. "
             "Jak najwięcej unikaj pirackiego oraz nieoficjalnego oprogramowania - często zawierają one złośliwy kod i są najczęstszą przyczyną zainfekowania malware. ",
 
-            "3. Ataki socjotechniczne –> polegają na manipulacji człowiekiem, aby sam przekazał poufne informacje. Często przestępca podaje się za znane nam osoby lub pracowników korzystanych przez nas firm. "
+            "3. Ataki socjotechniczne –> polegają na manipulacji człowiekiem, aby sam przekazał poufne informacje. Często przestępca podaje się za znane nam osoby lub pracowników korzystanych przez nas firm. ",
             "- Jak się bronić: nigdy nie udostępniaj nikomu swoich haseł, kodów oraz danych osobistych przez telefon lub e-mail. "
             "Przestępcy często podszywają się pod pracowników banku, policję lub firmę kurierską, staraj się zawsze jak najbardziej weryfikować takie rozmowy. ",
 
-            "4. Keyloggery i kradzież danych logowania –> są to oprogramowanie rejestrujące każde naciśnięcie klawisza użytkownika. "
+            "4. Keyloggery i kradzież danych logowania –> są to oprogramowanie rejestrujące każde naciśnięcie klawisza użytkownika. ",
             "- Jak się bronić: używaj menedżera haseł i uwierzytelniania dwustopniowego (MFA). "
             "Unikaj logowania się na niezaufanych komputerach oraz przy pomocy nie twojego sprzętu np. w kafejkach lub bibliotekach. ",
 
-            "5. Ataki na Wi-Fi publiczne –> przestępcy mogą podsłuchiwać ruch w otwartych, niezabezpieczonych sieciach. "
+            "5. Ataki na Wi-Fi publiczne –> przestępcy mogą podsłuchiwać ruch w otwartych, niezabezpieczonych sieciach. ",
             "- Jak się bronić: unikaj korzystania z sieci publicznych oraz logowania się w nich. Dodatkowo zalecane jest używanie VPN-a. "
             "Jeśli musisz korzystać z publicznego Wi-Fi, nigdy nie loguj się do ważnych dla ciebie kont np. stron bankowych lub poczty. ",
 
