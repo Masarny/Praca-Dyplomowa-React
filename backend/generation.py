@@ -31,7 +31,7 @@ def generate_diceware():
     sep_map = {"space":" ", "dash":"-", "underscore":"_", "slash":"/"}
 
     if sep_param == "random":
-        separator = None  # specjalny przypadek — losowy dla każdego odstępu
+        separator = None
     else:
         separator = sep_map.get(sep_param)
 

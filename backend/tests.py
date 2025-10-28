@@ -1,6 +1,14 @@
 from flask import Blueprint, jsonify, request
 from zxcvbn import zxcvbn
-import re, math, random
+import re, math, traceback, random
+
+
+try:
+    with open("dicts/wordlist_merged_en_pl.txt", "r", encoding="utf-8", errors="ignore") as f:
+        COMMON_PATTERNS = set(line.strip().lower() for line in f if line.strip())
+except FileNotFoundError:
+    COMMON_PATTERNS = set()
+    print("Nie znaleziono pliku dicts/wordlist_merged_en_pl.txt.")
 
 
 polish = {
@@ -89,31 +97,62 @@ def translate_crack_time_string(english_string):
 tests_bp = Blueprint("tests_bp", __name__)
 
 
+def uniq(seq):
+    seen = set()
+    out = []
+    for x in seq:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+
+def translate_msg(m, map_dict):
+    if not m:
+        return None
+    if m in map_dict:
+        return map_dict[m]
+    low = m.lower()
+    for k, v in map_dict.items():
+        if k.lower() in low:
+            return v
+    return m
+
+
 @tests_bp.route("/test_password", methods=["POST"])
 def test_password():
     data = request.get_json() or {}
     password = data.get("password", "")
     if not password:
-        return jsonify({"error":"Password required"}), 400
+        return jsonify({"error": "Password required"}), 400
 
     try:
         res = zxcvbn(password)
-        z_score = int(res.get("score",0))
-        z_feedback = res.get("feedback",{}) or {}
-        z_crack = res.get("crack_times_display",{}).get("offline_slow_hashing_1e4_per_second","Unknown")
-    except Exception:
-        z_score = 0; z_feedback = {}; z_crack = "Unknown"
+        z_score = int(res.get("score", 0))
+        z_feedback = res.get("feedback", {}) or {}
+        z_crack = res.get("crack_times_display", {}).get("offline_slow_hashing_1e4_per_second", "Unknown")
+    except Exception as e:
+        print("Błąd zxcvbn:", e)
+        traceback.print_exc()
+        z_score = 0
+        z_feedback = {}
+        z_crack = "Unknown"
 
     words = re.findall(r"[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", password)
     word_count = len(words)
 
+    entropy = 0
     if word_count >= 3:
         entropy = math.log2(7776 ** word_count)
-        if entropy < 40: score = 1
-        elif entropy < 60: score = 2
-        elif entropy < 80: score = 3
-        else: score = 4
-        crack_time = f"{round(entropy,1)} bity entropii"
+        if entropy < 40:
+            score = 1
+        elif entropy < 60:
+            score = 2
+        elif entropy < 80:
+            score = 3
+        else:
+            score = 4
+        crack_time = f"{round(entropy, 1)} bity entropii"
     else:
         score = z_score
         try:
@@ -123,76 +162,68 @@ def test_password():
 
     warnings = []
     suggestions = []
+
     z_warn = z_feedback.get("warning")
     z_sugs = z_feedback.get("suggestions", [])
-
-    trans = polish
-
-    def translate_msg(m, map_dict):
-        if not m: return None
-        if m in map_dict: return map_dict[m]
-        low = m.lower()
-        for k,v in map_dict.items():
-            if k.lower() in low: return v
-        return m
-
-    for w in (z_warn if isinstance(z_warn,list) else ([z_warn] if z_warn else [])):
-        t = translate_msg(w, trans.get("warning", {})); 
-        if t: warnings.append(t)
-
+    for w in (z_warn if isinstance(z_warn, list) else ([z_warn] if z_warn else [])):
+        t = translate_msg(w, polish.get("warning", {}))
+        if t:
+            warnings.append(t)
     for s in z_sugs:
-        t = translate_msg(s, trans.get("suggestions", {})); 
-        if t: suggestions.append(t)
+        t = translate_msg(s, polish.get("suggestions", {}))
+        if t:
+            suggestions.append(t)
 
-    common_patterns = ["password", "qwerty", "12345", "admin", "letmein", "welcome", "abc123"]
-    for pat in common_patterns:
-        if pat.lower() in password.lower():
+    for pat in COMMON_PATTERNS:
+        if re.search(rf"\b{re.escape(pat)}\b", password, re.IGNORECASE):
             warnings.append(f"Hasło zawiera popularny wzorzec: '{pat}'.")
+
+    if word_count == 1 and password.lower() in COMMON_PATTERNS:
+        warnings.append("Hasło jest pojedynczym, popularnym słowem — bardzo słabe i łatwe do odgadnięcia.")
 
     if len(set(password)) < len(password) / 2:
         warnings.append("Zbyt wiele powtarzających się znaków — zwiększ różnorodność.")
+    if re.search(r"(.)\1{2,}", password):
+        warnings.append("Hasło zawiera powtarzające się znaki (np. 'aaa').")
+    if re.search(r"(0123|1234|2345|abcd|qwerty)", password.lower()):
+        warnings.append("Hasło zawiera prostą sekwencję znaków.")
 
-    charset_size = 0
-    if re.search(r"[a-z]", password): charset_size += 26
-    if re.search(r"[A-Z]", password): charset_size += 26
-    if re.search(r"\d", password): charset_size += 10
-    if re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): charset_size += 20
+    if len(password) < 12:
+        suggestions.append("Użyj co najmniej 12 znaków — dłuższe hasła są znacznie trudniejsze do złamania.")
 
-    keyboard_patterns = ["qwerty", "asdf", "zxcv", "1234", "0987"]
-    for seq in keyboard_patterns:
-        if seq in password.lower():
-            warnings.append(f"Unikaj sekwencji klawiaturowych jak '{seq}'.")
+    if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password):
+        suggestions.append("Dodaj wielkie litery.")
+    if not re.search(r"\d", password):
+        suggestions.append("Dodaj co najmniej jedną cyfrę.")
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
+    if word_count >= 3:
+        suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
+    if word_count > 12:
+        warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
 
-    weak_words = ["haslo", "tajne", "moje", "user", "login", "kot", "pies"]
-    for w in weak_words:
-        if re.search(rf"\b{w}\b", password.lower()):
-            warnings.append(f"Hasło zawiera łatwe do odgadnięcia słowo: '{w}'.")
+    if any(x in crack_time for x in ["sekund", "minut", "godzin", "mniej niż"]):
+        warnings.append("Hasło można złamać w czasie poniżej doby metodą brute force.")
 
-    if len(password) < 8: suggestions.append("Użyj co najmniej 8 znaków.")
-    if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password): suggestions.append("Dodaj wielkie litery.")
-    if not re.search(r"\d", password): suggestions.append("Dodaj co najmniej jedną cyfrę.")
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
-    if word_count >= 3: suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
-    if word_count > 12: warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
+    if score <= 2:
+        labels = ["Bardzo słabe", "Słabe", "Średnie"]
+        warnings.append(f"{labels[score]} hasło — nie jest zalecane używanie go.")
 
-    def uniq(seq):
-        seen=set(); out=[]
-        for x in seq:
-            if x not in seen:
-                seen.add(x); out.append(x)
-        return out
-
-    warnings = uniq(warnings) or ["Brak ostrzeżeń!"]
-    suggestions = uniq(suggestions) or ["Brak sugestii!"]
-    labels = ["Bardzo słabe","Słabe","Średnie","Silne","Bardzo silne"]
-    score = max(0,min(4,int(score)))
+    warnings = uniq(warnings) or ["Brak ostrzeżeń."]
+    suggestions = uniq(suggestions) or ["Brak sugestii."]
+    labels = ["Bardzo słabe", "Słabe", "Średnie", "Silne", "Bardzo silne"]
+    score = max(0, min(4, int(score)))
 
     return jsonify({
         "strength": labels[score],
         "score": score,
         "warnings": warnings,
         "suggestions": suggestions,
-        "crack_time": crack_time
+        "crack_time": crack_time,
+        "entropy_bits": round(entropy, 1) if word_count >= 3 else None,
+        "zxcvbn_score": z_score,
+        "length": len(password),
+        "unique_chars": len(set(password))
     })
 
 
