@@ -1,11 +1,13 @@
 import os
 from cryptography.fernet import Fernet
 from dotenv import load_dotenv
+from functools import lru_cache
 
 
 load_dotenv()
 
 
+@lru_cache(maxsize=1)
 def get_fernet():
     FERNET_KEY = os.environ.get("FERNET_KEY")
     if not FERNET_KEY:

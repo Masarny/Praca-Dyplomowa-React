@@ -10,16 +10,30 @@ from zxcvbn import zxcvbn
 import string, secrets, random, re, math, os, traceback
 from datetime import timedelta
 from flask_jwt_extended import JWTManager
+from flask_compress import Compress
+from flask_caching import Cache
 
 
 from dotenv import load_dotenv
 load_dotenv()
+
+
 if not os.environ.get("JWT_SECRET_KEY"):
     print("Uwaga: Brak JWT_SECRET_KEY w .env – używany klucz domyślny!")
 if not os.environ.get("FERNET_KEY"):
     print("Uwaga: Brak FERNET_KEY w .env – szyfrowanie haseł nie będzie bezpieczne!")
 
+
 app = Flask(__name__, static_folder="../frontend/dist", static_url_path="/")
+
+
+Compress(app)
+
+
+cache = Cache(app, config={
+    "CACHE_TYPE": "SimpleCache",
+    "CACHE_DEFAULT_TIMEOUT": 300
+})
 
 
 CORS(app, origins=["http://localhost:5173", "http://127.0.0.1:5173"], supports_credentials=True)
@@ -50,9 +64,11 @@ with app.app_context():
 def missing_token_callback(error):
     return jsonify({"error": "Brak nagłówka Authorization lub nieprawidłowy token."}), 401
 
+
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
     return jsonify({"error": "Nieprawidłowy token JWT."}), 422
+
 
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_payload):
@@ -65,7 +81,7 @@ def serve_index():
         return send_from_directory(app.static_folder, "index.html")
     except Exception as e:
         traceback.print_exc()
-        return jsonify({"status": "frontend not found", "error": str(e)}), 200
+        return jsonify({"status": "frontend not found"}), 404
 
 
 @app.errorhandler(Exception)
@@ -73,8 +89,6 @@ def handle_exception(e):
     """Globalna obsługa wyjątków"""
     print("=== Błąd backendu ===")
     traceback.print_exc()
-
-    # Jeśli to błąd HTTP, zwróć jego kod
     from werkzeug.exceptions import HTTPException
     if isinstance(e, HTTPException):
         return jsonify({
@@ -82,12 +96,32 @@ def handle_exception(e):
             "status": e.code
         }), e.code
 
-    # Inne błędy — 500 Internal Server Error
     return jsonify({
         "error": "Wewnętrzny błąd serwera",
         "details": str(e)
     }), 500
 
 
+@app.after_request
+def add_security_headers(response):
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "img-src 'self' data:; "
+        "style-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
+        "connect-src 'self';"
+    )
+    return response
+
+
 if __name__ == "__main__":
     app.run(debug=True)
+

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef  } from "react";
 import { Link } from "react-router-dom";
 
 export default function Tester() {
@@ -9,7 +9,23 @@ export default function Tester() {
   const [crackTime, setCrackTime] = useState("");
   const [improvedPassword, setImprovedPassword] = useState("");
   const [loadingImprove, setLoadingImprove] = useState(false);
+  const [loadingTest, setLoadingTest] = useState(false);
+  const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const abortRef = useRef(null);
+
+  const fetchWithTimeout = async (url, options, timeout = 8000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(id);
+      return res;
+    } catch (err) {
+      clearTimeout(id);
+      throw err;
+    }
+  };
 
   const testPassword = async () => {
     if (!password) {
@@ -17,37 +33,46 @@ export default function Tester() {
       return;
     }
 
+    setLoadingTest(true);
+    setError("");
     try {
+      abortRef.current?.abort();
+      abortRef.current = new AbortController();
+
       const res = await fetch("/api/test_password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
+        signal: abortRef.current.signal,
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (res.ok) {
-        setStrength(data.strength);
-        setWarnings(data.warnings);
-        setSuggestions(data.suggestions);
-        setCrackTime(data.crack_time);
+      if (res.ok && data) {
+        setStrength(data.strength || "Nieznana");
+        setWarnings(data.warnings || []);
+        setSuggestions(data.suggestions || []);
+        setCrackTime(data.crack_time || "");
         setImprovedPassword("");
       } else {
-        alert(data.error || "Wystąpił błąd podczas testowania hasła.");
+        setError(data.error || "Wystąpił błąd podczas testowania hasła.");
       }
     } catch (err) {
-      console.error(err);
-      alert("Błąd połączenia z serwerem.");
+      console.error("Błąd połączenia:", err);
+      if (err.name === "AbortError") setError("Przerwano żądanie (timeout).");
+      else setError("Błąd połączenia z serwerem.");
+    } finally {
+      setLoadingTest(false);
     }
   };
 
   const improvePassword = async () => {
-    if (!password) {
+    if (!password.trim()) {
       alert("Najpierw przetestuj hasło!");
       return;
     }
-
     setLoadingImprove(true);
+    setError("");
     try {
       const res = await fetch("/api/improve_password", {
         method: "POST",
@@ -55,28 +80,29 @@ export default function Tester() {
         body: JSON.stringify({ password }),
       });
 
-      const data = await res.json();
-      if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.improved_password) {
         setImprovedPassword(data.improved_password);
       } else {
-        alert(data.error || "Nie udało się ulepszyć hasła.");
+        setError(data.error || "Nie udało się ulepszyć hasła.");
       }
     } catch (err) {
       console.error(err);
-      alert("Błąd połączenia z serwerem.");
+      setError("Błąd połączenia z serwerem.");
     } finally {
       setLoadingImprove(false);
     }
   };
 
   const copyImproved = async () => {
+    if (!improvedPassword) return;
     try {
       await navigator.clipboard.writeText(improvedPassword);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (err) {
       console.error("Copy failed", err);
-      alert("Nie udało się skopiować hasła.");
+      setError("Nie udało się skopiować hasła.");
     }
   };
 
@@ -87,15 +113,25 @@ export default function Tester() {
       <input
         type="text"
         placeholder="Wpisz hasło do przetestowania"
+        aria-label="Wpisz hasło do przetestowania"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
       />
 
-      <button className="btn" onClick={testPassword}>
-        Testuj hasło
+      <button
+        className="btn"
+        onClick={testPassword}
+        disabled={loadingTest}
+        aria-busy={loadingTest}
+      >
+        {loadingTest ? "Testuję..." : "Testuj hasło"}
       </button>
 
-      {strength && (
+      {error && (
+        <p style={{ color: "red", marginTop: 10, fontWeight: "bold" }}>{error}</p>
+      )}
+  
+      {strength && !error && (
         <div style={{ marginTop: "20px", textAlign: "left" }}>
           <p>
             <strong>Siła hasła:</strong> {strength}

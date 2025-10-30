@@ -6,18 +6,76 @@ export default function Guidelines() {
   const [guidelines, setGuidelines] = useState({});
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Ataki na Użytkowników");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const cached = localStorage.getItem("guidelines");
+
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === "object") {
+          setGuidelines(parsed);
+          setLoading(false);
+        }
+      } catch {
+        console.warn("Nie udało się odczytać cache guidelines.");
+      }
+    }
+
     fetch("/api/guidelines")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Błąd sieci");
+        return res.json();
+      })
       .then((data) => {
-        setGuidelines(data);
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+          setGuidelines(data);
+          localStorage.setItem("guidelines", JSON.stringify(data));
+        } else {
+          console.error("Niepoprawny format danych z backendu");
+          setError("Niepoprawny format danych z serwera.");
+          setGuidelines(null);
+        }
         setLoading(false);
       })
-      .catch(() => {
-        setLoading(false);
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error("Błąd pobierania:", err);
+          setError("Nie udało się pobrać danych z serwera.");
+          setLoading(false);
+          setGuidelines(null);
+        }
       });
+
+    return () => controller.abort();
   }, []);
+
+  if (error) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "40px" }}>
+        <h3 role="alert" aria-live="assertive">{error}</h3>
+        <Link to="/main">
+          <button
+            className="btn"
+            style={{
+              backgroundColor: "#007BFF",
+              color: "white",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              marginTop: "20px",
+            }}
+            aria-label="Powrót do strony głównej po błędzie"
+          >
+            Powrót
+          </button>
+        </Link>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -27,7 +85,31 @@ export default function Guidelines() {
     );
   }
 
-  const categories = Object.keys(guidelines);
+if (!loading && !guidelines) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "40px" }}>
+        <h3 role="alert">Nie udało się pobrać wytycznych. Spróbuj ponownie później.</h3>
+        <Link to="/main">
+          <button
+            className="btn"
+            style={{
+              backgroundColor: "#007BFF",
+              color: "white",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              border: "none",
+              cursor: "pointer",
+              marginTop: "20px",
+            }}
+          >
+            Powrót
+          </button>
+        </Link>
+      </div>
+    );
+  }
+
+  const categories = Array.isArray(Object.keys(guidelines)) ? Object.keys(guidelines) : [];
 
   return (
     <div className="container_guide" style={{ textAlign: "left", padding: "20px" }}>
@@ -36,6 +118,7 @@ export default function Guidelines() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-2xl font-bold mb-4"
+        aria-label="Wytyczne dotyczące bezpieczeństwa"
       >
         <p style={{ textAlign: "center", fontSize: "1.8rem" }}>
           Wytyczne Dotyczące Bezpieczeństwa
@@ -50,6 +133,8 @@ export default function Guidelines() {
           justifyContent: "center",
           marginBottom: "25px",
         }}
+        role="tablist"
+        aria-label="Kategorie wytycznych"
       >
         {categories.map((cat) => (
           <motion.button
@@ -68,6 +153,8 @@ export default function Guidelines() {
               transition: "0.2s",
               fontWeight: "500",
             }}
+            aria-selected={selectedCategory === cat}
+            role="tab"
           >
             {cat}
           </motion.button>
@@ -90,6 +177,8 @@ export default function Guidelines() {
               boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               lineHeight: "1.6",
             }}
+            role="tabpanel"
+            aria-label={`Wytyczne dla kategorii ${selectedCategory}`}
           >
             <h3
               style={{
@@ -113,6 +202,7 @@ export default function Guidelines() {
                     padding: "8px 0",
                     borderBottom: "1px solid #e0e0e0",
                   }}
+                  tabIndex={0}
                 >
                   {tip}
                 </motion.p>
@@ -139,6 +229,7 @@ export default function Guidelines() {
               border: "none",
               cursor: "pointer",
             }}
+            aria-label="Powrót do strony głównej"
           >
             Powrót
           </button>

@@ -16,11 +16,19 @@ export default function Creator() {
 
   const token = localStorage.getItem("token");
 
+  const sanitize = (text) => text.replace(/[<>]/g, "");
+
   const generatePassword = async () => {
     setLoading(true);
     setError(null);
     setPassword("");
     setCopied(false);
+
+    if (method === "phrase" && phrase.length > 500) {
+      setError("Zdanie jest za długie (max 500 znaków).");
+      setLoading(false);
+      return;
+    }
 
     try {
       let url = "";
@@ -39,15 +47,20 @@ export default function Creator() {
         };
       }
 
-      const res = await fetch(url, options);
-      const data = await res.json();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
 
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      const data = await res.json();
       if (!res.ok) throw new Error(data.error || `Status ${res.status}`);
 
       setPassword(data.password);
     } catch (err) {
       console.error("Generate error:", err);
-      setError(err.message || "Failed to generate password");
+      if (err.name === "AbortError") setError("Przekroczono czas oczekiwania (7s).");
+      else setError(err.message || "Failed to generate password");
     } finally {
       setLoading(false);
     }
@@ -72,6 +85,10 @@ export default function Creator() {
     }
     if (!site || !login || !password) {
       alert("Podaj stronę, login i wygeneruj hasło przed zapisaniem.");
+      return;
+    }
+    if (site.length > 100 || login.length > 100) {
+      alert("Strona i login nie mogą przekraczać 100 znaków.");
       return;
     }
 
@@ -115,7 +132,9 @@ export default function Creator() {
 
       <label>Wybierz Metodę Generowania Hasła:</label>
       <select
+        id="method"
         className="password_select"
+        aria-label="Wybór metody generowania hasła"
         value={method}
         onChange={(e) => {
           setMethod(e.target.value);
@@ -131,8 +150,10 @@ export default function Creator() {
 
       {method === "phrase" ? (
         <div style={{ marginTop: 10 }}>
-          <label>Wprowadź swoje zdanie:</label>
+          <label htmlFor="phrase-input">Wprowadź swoje zdanie:</label>
           <textarea
+            id="phrase-input"
+            aria-label="Zdanie do przekształcenia w hasło"
             placeholder="Np. Mój kot lubi spać na słońcu w maju."
             value={phrase}
             onChange={(e) => setPhrase(e.target.value)}
@@ -145,24 +166,29 @@ export default function Creator() {
         </div>
       ) : (
         <div>
-          <label>
+          <label htmlFor="length-range">
             {labelText} <span style={{ fontWeight: 700 }}>{length}</span>
           </label>
           <input
+            id="length-range"
             type="range"
             min={min}
             max={max}
             value={length}
             onChange={(e) => setLength(Number(e.target.value))}
             style={{ width: "100%", marginTop: 8 }}
+            aria-valuemin={min}
+            aria-valuemax={max}
           />
         </div>
       )}
 
       {method === "diceware" && (
         <div>
-          <label>Separator:</label>
+          <label htmlFor="separator-select">Separator:</label>
           <select
+            id="separator-select"
+            aria-label="Wybór separatora słów"
             value={separator}
             onChange={(e) => setSeparator(e.target.value)}
             style={{ marginTop: 8, padding: 6, width: "100%" }}
@@ -180,11 +206,12 @@ export default function Creator() {
       )}
 
       <div>
-        <button className="btn" onClick={generatePassword} disabled={loading}>
+        <button className="btn" onClick={generatePassword} disabled={loading} aria-label="Utwórz hasło">
           {loading ? "Tworzenie hasła..." : "Utwórz hasło"}
         </button>
         <button
           className="btn"
+          aria-label="Resetuj formularz"
           onClick={() => {
             setPassword("");
             setError(null);
@@ -205,9 +232,10 @@ export default function Creator() {
             borderRadius: 8,
             wordBreak: "break-all",
           }}
+          aria-live="polite"
         >
           <span id="generated-password">
-            {password || <em style={{ color: "#666" }}>Brak Hasła</em>}
+            {password ? sanitize(password) : <em style={{ color: "#666" }}>Brak Hasła</em>}
           </span>
         </div>
 
@@ -215,7 +243,7 @@ export default function Creator() {
       </div>
 
       <div>
-        <button className="btn" onClick={copyToClipboard} disabled={!password}>
+        <button className="btn" onClick={copyToClipboard} disabled={!password} aria-label="Kopiuj hasło">
           {copied ? "Skopiowano!" : "Kopiuj do schowka"}
         </button>
       </div>
@@ -223,11 +251,13 @@ export default function Creator() {
       <div style={{ marginTop: 20 }}>
         <input
           placeholder="Strona (np. gmail.com)"
+          aria-label="Nazwa strony"
           value={site}
           onChange={(e) => setSite(e.target.value)}
         />
         <input
           placeholder="Login / adres e-mail"
+          aria-label="Login lub adres e-mail"
           value={login}
           onChange={(e) => setLogin(e.target.value)}
         />
@@ -237,7 +267,7 @@ export default function Creator() {
       </div>
 
       <Link to="/main">
-        <button className="btn">Powrót</button>
+        <button className="btn" aria-label="Powrót do strony głównej">Powrót</button>
       </Link>
     </div>
   );

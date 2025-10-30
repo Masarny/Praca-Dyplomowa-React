@@ -5,6 +5,9 @@ import string, secrets, random, re, os
 generation_bp = Blueprint("generation_bp", __name__)
 
 
+_dice_cache = None
+
+
 @generation_bp.route("/generate")
 def generate_password():
     try:
@@ -20,6 +23,7 @@ def generate_password():
 
 @generation_bp.route("/generate_diceware")
 def generate_diceware():
+    global _dice_cache
     try:
         count = int(request.args.get("count", 5))
     except (TypeError, ValueError):
@@ -41,24 +45,29 @@ def generate_diceware():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     dice_path = os.path.join(base_dir, "dicts", "dice-directory.txt")
 
-    D = {}
-
-    try:
-        with open(dice_path, encoding="utf-8") as f:
-            for line in f:
-                parts = line.strip().split()
-                if len(parts) >= 2:
-                    D[parts[0]] = parts[1]
-    except FileNotFoundError:
-        return jsonify({"error":"Missing dice list file"}), 500
+    if _dice_cache is None:
+        try:
+            with open(dice_path, encoding="utf-8") as f:
+                D = {}
+                for line in f:
+                    parts = line.strip().split()
+                    if len(parts) >= 2:
+                        D[parts[0]] = parts[1]
+            if not D:
+                return jsonify({"error": "Dictionary file is empty or corrupted"}), 500
+            _dice_cache = D
+        except FileNotFoundError:
+            return jsonify({"error": "Missing dice list file"}), 500
+    else:
+        D = _dice_cache
 
     words = []
-
     for _ in range(count):
         while True:
             key = "".join(str(random.randint(1,6)) for _ in range(5))
             if key in D:
-                words.append(D[key]); break
+                words.append(D[key])
+                break
 
     if sep_param == "random":
         sep_values = list(sep_map.values())
@@ -76,16 +85,17 @@ def generate_diceware():
 def generate_from_phrase():
     data = request.get_json() or {}
     phrase = data.get("phrase", "").strip()
+
     if not phrase:
         return jsonify({"error": "Brak zdania wejściowego."}), 400
 
+    phrase = re.sub(r"[<>\"']", "", phrase)
     phrase = re.sub(r"\s+", " ", phrase)
 
     specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "="]
     separator = random.choice(["@", "$", "&", "_", "-", "=", " "])
 
     words = phrase.split(" ")
-    password = separator.join(words)
 
     def smart_case(word):
         result = ""

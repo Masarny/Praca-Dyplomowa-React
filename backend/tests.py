@@ -1,6 +1,9 @@
 from flask import Blueprint, jsonify, request
 from zxcvbn import zxcvbn
-import re, math, traceback, random
+import re, math, traceback, random, html
+
+
+tests_bp = Blueprint("tests_bp", __name__)
 
 
 try:
@@ -94,9 +97,6 @@ def translate_crack_time_string(english_string):
     return f"{number} {plural_form}"
 
 
-tests_bp = Blueprint("tests_bp", __name__)
-
-
 def uniq(seq):
     seen = set()
     out = []
@@ -121,157 +121,174 @@ def translate_msg(m, map_dict):
 
 @tests_bp.route("/test_password", methods=["POST"])
 def test_password():
-    data = request.get_json() or {}
-    password = data.get("password", "")
-    if not password:
-        return jsonify({"error": "Password required"}), 400
-
     try:
-        res = zxcvbn(password)
-        z_score = int(res.get("score", 0))
-        z_feedback = res.get("feedback", {}) or {}
-        z_crack = res.get("crack_times_display", {}).get("offline_slow_hashing_1e4_per_second", "Unknown")
-    except Exception as e:
-        print("Błąd zxcvbn:", e)
-        traceback.print_exc()
-        z_score = 0
-        z_feedback = {}
-        z_crack = "Unknown"
+        data = request.get_json(silent=True) or {}
+        password = str(data.get("password", "")).strip()
 
-    words = re.findall(r"[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", password)
-    word_count = len(words)
+        if not password:
+            return jsonify({"error": "Hasło jest wymagane."}), 400
 
-    entropy = 0
-    if word_count >= 3:
-        entropy = math.log2(7776 ** word_count)
-        if entropy < 40:
-            score = 1
-        elif entropy < 60:
-            score = 2
-        elif entropy < 80:
-            score = 3
-        else:
-            score = 4
-        crack_time = f"{round(entropy, 1)} bity entropii"
-    else:
-        score = z_score
+        if len(password) > 512:
+            return jsonify({"error": "Hasło jest zbyt długie (max 512 znaków)."}), 400
+
+        password = "".join(ch for ch in password if ch.isprintable())
+
         try:
-            crack_time = translate_crack_time_string(z_crack)
-        except Exception:
-            crack_time = z_crack
+            res = zxcvbn(password)
+            z_score = int(res.get("score", 0))
+            z_feedback = res.get("feedback", {}) or {}
+            z_crack = res.get("crack_times_display", {}).get("offline_slow_hashing_1e4_per_second", "Unknown")
+        except Exception as e:
+            print("Błąd zxcvbn:", e)
+            traceback.print_exc()
+            z_score = 0
+            z_feedback = {}
+            z_crack = "Unknown"
 
-    warnings = []
-    suggestions = []
+        words = re.findall(r"[A-Za-ząćęłńóśźżĄĆĘŁŃÓŚŹŻ]+", password)
+        word_count = len(words)
 
-    z_warn = z_feedback.get("warning")
-    z_sugs = z_feedback.get("suggestions", [])
-    for w in (z_warn if isinstance(z_warn, list) else ([z_warn] if z_warn else [])):
-        t = translate_msg(w, polish.get("warning", {}))
-        if t:
-            warnings.append(t)
-    for s in z_sugs:
-        t = translate_msg(s, polish.get("suggestions", {}))
-        if t:
-            suggestions.append(t)
+        entropy = 0
+        if word_count >= 3:
+            entropy = math.log2(7776 ** word_count)
+            if entropy < 40:
+                score = 1
+            elif entropy < 60:
+                score = 2
+            elif entropy < 80:
+                score = 3
+            else:
+                score = 4
+            crack_time = f"{round(entropy, 1)} bity entropii"
+        else:
+            score = z_score
+            try:
+                crack_time = translate_crack_time_string(z_crack)
+            except Exception:
+                crack_time = z_crack
 
-    for pat in COMMON_PATTERNS:
-        if re.search(rf"\b{re.escape(pat)}\b", password, re.IGNORECASE):
-            warnings.append(f"Hasło zawiera popularny wzorzec: '{pat}'.")
+        warnings = []
+        suggestions = []
 
-    if word_count == 1 and password.lower() in COMMON_PATTERNS:
-        warnings.append("Hasło jest pojedynczym, popularnym słowem — bardzo słabe i łatwe do odgadnięcia.")
+        z_warn = z_feedback.get("warning")
+        z_sugs = z_feedback.get("suggestions", [])
+        for w in (z_warn if isinstance(z_warn, list) else ([z_warn] if z_warn else [])):
+            t = translate_msg(w, polish.get("warning", {}))
+            if t:
+                warnings.append(t)
+        for s in z_sugs:
+            t = translate_msg(s, polish.get("suggestions", {}))
+            if t:
+                suggestions.append(t)
 
-    if len(set(password)) < len(password) / 2:
-        warnings.append("Zbyt wiele powtarzających się znaków — zwiększ różnorodność.")
-    if re.search(r"(.)\1{2,}", password):
-        warnings.append("Hasło zawiera powtarzające się znaki (np. 'aaa').")
-    if re.search(r"(0123|1234|2345|abcd|qwerty)", password.lower()):
-        warnings.append("Hasło zawiera prostą sekwencję znaków.")
+        for pat in COMMON_PATTERNS:
+            if re.search(rf"\b{re.escape(pat)}\b", password, re.IGNORECASE):
+                warnings.append(f"Hasło zawiera popularny wzorzec: '{pat}'.")
 
-    if len(password) < 12:
-        suggestions.append("Użyj co najmniej 12 znaków — dłuższe hasła są znacznie trudniejsze do złamania.")
+        if word_count == 1 and password.lower() in COMMON_PATTERNS:
+            warnings.append("Hasło jest pojedynczym, popularnym słowem — bardzo słabe i łatwe do odgadnięcia.")
 
-    if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password):
-        suggestions.append("Dodaj wielkie litery.")
-    if not re.search(r"\d", password):
-        suggestions.append("Dodaj co najmniej jedną cyfrę.")
-    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
-        suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
-    if word_count >= 3:
-        suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
-    if word_count > 12:
-        warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
+        if len(set(password)) < len(password) / 2:
+            warnings.append("Zbyt wiele powtarzających się znaków — zwiększ różnorodność.")
+        if re.search(r"(.)\1{2,}", password):
+            warnings.append("Hasło zawiera powtarzające się znaki (np. 'aaa').")
+        if re.search(r"(0123|1234|2345|abcd|qwerty)", password.lower()):
+            warnings.append("Hasło zawiera prostą sekwencję znaków.")
 
-    if any(x in crack_time for x in ["sekund", "minut", "godzin", "mniej niż"]):
-        warnings.append("Hasło można złamać w czasie poniżej doby metodą brute force.")
+        if len(password) < 12:
+            suggestions.append("Użyj co najmniej 12 znaków — dłuższe hasła są znacznie trudniejsze do złamania.")
 
-    if score <= 2:
-        labels = ["Bardzo słabe", "Słabe", "Średnie"]
-        warnings.append(f"{labels[score]} hasło — nie jest zalecane używanie go.")
+        if not re.search(r"[A-ZĄĆĘŁŃÓŚŹŻ]", password):
+            suggestions.append("Dodaj wielkie litery.")
+        if not re.search(r"\d", password):
+            suggestions.append("Dodaj co najmniej jedną cyfrę.")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            suggestions.append("Dodaj znaki specjalne (np. @, #, $).")
+        if word_count >= 3:
+            suggestions.append("Passphrase z kilkoma losowymi słowami to dobry wybór — nie zmieniaj ich kolejności.")
+        if word_count > 12:
+            warnings.append("Bardzo długie passphrase może być trudne do zapamiętania.")
 
-    warnings = uniq(warnings) or ["Brak ostrzeżeń."]
-    suggestions = uniq(suggestions) or ["Brak sugestii."]
-    labels = ["Bardzo słabe", "Słabe", "Średnie", "Silne", "Bardzo silne"]
-    score = max(0, min(4, int(score)))
+        if any(x in crack_time for x in ["sekund", "minut", "godzin", "mniej niż"]):
+            warnings.append("Hasło można złamać w czasie poniżej doby metodą brute force.")
 
-    return jsonify({
-        "strength": labels[score],
-        "score": score,
-        "warnings": warnings,
-        "suggestions": suggestions,
-        "crack_time": crack_time,
-        "entropy_bits": round(entropy, 1) if word_count >= 3 else None,
-        "zxcvbn_score": z_score,
-        "length": len(password),
-        "unique_chars": len(set(password))
-    })
+        if score <= 2:
+            labels = ["Bardzo słabe", "Słabe", "Średnie"]
+            warnings.append(f"{labels[score]} hasło — nie jest zalecane używanie go.")
+
+        warnings = uniq(warnings) or ["Brak ostrzeżeń."]
+        suggestions = uniq(suggestions) or ["Brak sugestii."]
+        labels = ["Bardzo słabe", "Słabe", "Średnie", "Silne", "Bardzo silne"]
+        score = max(0, min(4, int(score)))
+
+        return jsonify({
+            "strength": labels[score],
+            "score": score,
+            "warnings": warnings,
+            "suggestions": suggestions,
+            "crack_time": crack_time,
+            "entropy_bits": round(entropy, 1) if word_count >= 3 else None,
+            "zxcvbn_score": z_score,
+            "length": len(password),
+            "unique_chars": len(set(password))
+        })
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": "Wewnętrzny błąd serwera podczas analizy hasła."}), 500
 
 
 @tests_bp.route("/improve_password", methods=["POST"])
 def improve_password():
-    data = request.get_json() or {}
-    password = data.get("password", "").strip()
-    if not password:
-        return jsonify({"error": "Brak hasła do ulepszenia."}), 400
+    try:
+        data = request.get_json(silent=True) or {}
+        password = str(data.get("password", "")).strip()
 
-    specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "+", "?"]
-    digits = "0123456789"
+        if not password:
+            return jsonify({"error": "Brak hasła do ulepszenia."}), 400
+        if len(password) > 512:
+            return jsonify({"error": "Hasło jest zbyt długie (max 512 znaków)."}), 400
 
-    words = re.split(r"\s+", password)
+        password = html.escape(password)
+        specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "+", "?"]
+        digits = "0123456789"
+        words = re.split(r"\s+", password)
 
-    def stylize_word(word):
-        if not word:
-            return ""
-        result = ""
-        for i, ch in enumerate(word):
-            if ch.isalpha():
-                if i == 0 or random.random() < 0.3:
-                    result += ch.upper()
+        def stylize_word(word):
+            if not word:
+                return ""
+            result = ""
+            for i, ch in enumerate(word):
+                if ch.isalpha():
+                    if i == 0 or random.random() < 0.3:
+                        result += ch.upper()
+                    else:
+                        result += ch.lower()
                 else:
-                    result += ch.lower()
-            else:
-                result += ch
-        return result
+                    result += ch
+            return result
 
-    styled_words = [stylize_word(w) for w in words]
-    separator = random.choice(["_", "-", "@", ""])
-    improved_core = separator.join(styled_words)
+        styled_words = [stylize_word(w) for w in words]
+        separator = random.choice(["_", "-", "@", ""])
+        improved_core = separator.join(styled_words)
 
-    prefix = ""
-    suffix = ""
+        prefix = ""
+        suffix = ""
 
-    if random.random() < 0.7:
-        prefix = random.choice(specials)
+        if random.random() < 0.7:
+            prefix = random.choice(specials)
 
-    suffix = str(random.randint(1000, 9999)) + random.choice(specials)
-    improved_password = f"{prefix}{improved_core}{suffix}"
+        suffix = str(random.randint(1000, 9999)) + random.choice(specials)
+        improved_password = f"{prefix}{improved_core}{suffix}"
 
-    if not any(c.isdigit() for c in improved_password):
-        improved_password += str(random.randint(1, 99))
-    if not re.search(r"[!@#$%^&*()_+\-?]", improved_password):
-        improved_password += random.choice(specials)
-    if not any(c.isupper() for c in improved_password):
-        improved_password = improved_password[0].upper() + improved_password[1:]
+        if not any(c.isdigit() for c in improved_password):
+            improved_password += str(random.randint(1, 99))
+        if not re.search(r"[!@#$%^&*()_+\-?]", improved_password):
+            improved_password += random.choice(specials)
+        if not any(c.isupper() for c in improved_password):
+            improved_password = improved_password[0].upper() + improved_password[1:]
 
-    improved_password = re.sub(r"\s+", "_", improved_password)
-    return jsonify({"improved_password": improved_password})
+        improved_password = re.sub(r"\s+", "_", improved_password)
+        return jsonify({"improved_password": improved_password})
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"error": "Błąd podczas ulepszania hasła."}), 500

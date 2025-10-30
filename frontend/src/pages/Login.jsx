@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
@@ -12,15 +12,20 @@ export default function Login() {
   const [passwordRequirements, setPasswordRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [totp, setTotp] = useState("");
-  const [qrCode, setQrCode] = useState(""); // ✅ dodane tylko to
+  const [qrCode, setQrCode] = useState("");
   const navigate = useNavigate();
 
-  const clearInputs = () => {
+  const clearInputs = useCallback(() => {
     setUsername("");
     setPassword("");
     setPasswordStrength("");
     setPasswordRequirements([]);
-  };
+  }, []);
+
+  const handleNetworkError = useCallback((err) => {
+    console.error("Błąd sieci:", err);
+    setError("Brak połączenia z serwerem. Sprawdź połączenie internetowe.");
+  }, []);
 
   const checkPasswordStrength = (password) => {
     let strength = 0;
@@ -67,6 +72,11 @@ export default function Login() {
         body: JSON.stringify({ username: firstAttempt.username, totp }),
       });
       const data = await res.json();
+      if (!data || typeof data !== "object") {
+        setError("Nieprawidłowa odpowiedź serwera.");
+        setLoading(false);
+        return;
+      }
       if (!res.ok) {
         setError(data.error || "Nieprawidłowy kod TOTP.");
         setLoading(false);
@@ -78,8 +88,7 @@ export default function Login() {
       clearInputs();
       navigate("/main");
     } catch (err) {
-      console.error("Błąd połączenia z serwerem:", err);
-      alert("Błąd połączenia z serwerem.");
+      handleNetworkError(err);
     } finally {
       setLoading(false);
     }
@@ -103,13 +112,17 @@ export default function Login() {
           body: JSON.stringify({ username, password }),
         });
         const data = await res.json();
+        if (!data || typeof data !== "object") {
+          setError("Nieprawidłowa odpowiedź serwera.");
+          setLoading(false);
+          return;
+        }
         if (!res.ok) {
           setError(data.error || "Błąd rejestracji.");
           setLoading(false);
           return;
         }
 
-        // ✅ Po rejestracji pokaż QR kod
         setQrCode(data.qr_code || "");
         alert("Zeskanuj ten kod QR w aplikacji Google Authenticator.");
         setError("");
@@ -124,6 +137,11 @@ export default function Login() {
           body: JSON.stringify({ username, password }),
         });
         const data = await res.json();
+        if (!data || typeof data !== "object") {
+          setError("Nieprawidłowa odpowiedź serwera.");
+          setLoading(false);
+          return;
+        }
         if (!res.ok) {
           setFirstAttempt({ username: "", password: "", success: false });
           setError(data.error || "Nieprawidłowa nazwa użytkownika lub hasło!");
@@ -155,8 +173,7 @@ export default function Login() {
         setLoading(false);
       }
     } catch (err) {
-      console.error("Błąd połączenia z serwerem:", err);
-      alert("Błąd połączenia z serwerem.");
+      handleNetworkError(err);
     } finally {
       setLoading(false);
     }
@@ -166,7 +183,6 @@ export default function Login() {
     <div className="container" style={{ textAlign: "center", maxWidth: "400px" }}>
       <h2>{isRegister ? "Rejestracja" : "Logowanie"}</h2>
 
-      {/* ✅ QR kod po rejestracji */}
       {qrCode && (
         <div style={{ marginTop: 20 }}>
           <p>Zeskanuj ten kod QR w aplikacji Google Authenticator:</p>
@@ -186,10 +202,11 @@ export default function Login() {
       )}
 
       {!qrCode && step !== 3 ? (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} aria-label={isRegister ? "Formularz rejestracji" : "Formularz logowania"}>
           <input
             type="text"
             placeholder="Nazwa użytkownika"
+            aria-label="Nazwa użytkownika"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -197,6 +214,7 @@ export default function Login() {
           <input
             type="password"
             placeholder="Hasło"
+            aria-label="Hasło użytkownika"
             value={password}
             onChange={handlePasswordChange}
             required
@@ -229,8 +247,8 @@ export default function Login() {
             </p>
           )}
           {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
-          <button className="btn" type="submit" disabled={loading}>
-            {isRegister ? "Zarejestruj się" : "Zaloguj się"}
+          <button className="btn" type="submit" disabled={loading} aria-busy={loading}>
+            {loading ? "Przetwarzanie..." : isRegister ? "Zarejestruj się" : "Zaloguj się"}
           </button>
         </form>
       ) : null}
@@ -240,12 +258,13 @@ export default function Login() {
           <input
             type="text"
             placeholder="Kod TOTP (Google Authenticator)"
+            aria-label="Kod TOTP"
             value={totp}
             onChange={(e) => setTotp(e.target.value)}
             required
           />
           {error && <p style={{ color: "red", marginTop: 10 }}>{error}</p>}
-          <button className="btn" type="submit" disabled={loading}>
+          <button className="btn" type="submit" disabled={loading} aria-busy={loading}>
             Zweryfikuj kod
           </button>
         </form>
@@ -261,6 +280,7 @@ export default function Login() {
             clearInputs();
           }}
           style={{ marginTop: "10px" }}
+          aria-label={isRegister ? "Przejdź do logowania" : "Przejdź do rejestracji"}
         >
           {isRegister
             ? "Masz już konto? Zaloguj się"

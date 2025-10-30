@@ -3,6 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from database import db
 from models import StoredPassword
 from encryption_utils import encrypt_text, decrypt_text
+import re
 
 
 passwords_bp = Blueprint("passwords_bp", __name__)
@@ -12,6 +13,7 @@ passwords_bp = Blueprint("passwords_bp", __name__)
 @jwt_required()
 def get_passwords():
     user_id = int(get_jwt_identity())
+
     try:
         passwords = StoredPassword.query.filter_by(user_id=user_id).all()
         data = []
@@ -19,7 +21,7 @@ def get_passwords():
             try:
                 decrypted = decrypt_text(p.password)
             except Exception:
-                decrypted = p.password
+                decrypted = "[BŁĄD ODSZYFROWANIA]"
             data.append({
                 "id": p.id,
                 "site": p.site,
@@ -29,8 +31,8 @@ def get_passwords():
             })
         return jsonify(data), 200
     except Exception as e:
-        import traceback; traceback.print_exc()
-        print("Błąd GET /api/passwords/:", e)
+        import traceback 
+        traceback.print_exc()
         return jsonify({"error": "Błąd pobierania haseł"}), 500
 
 
@@ -51,6 +53,11 @@ def add_password():
 
     if not site or not login or not password:
         return jsonify({"error": "Wymagane pola: site, login, password"}), 400
+
+    if len(site) > 255 or len(login) > 255 or len(password) > 1024 or len(notes) > 1024:
+        return jsonify({"error": "Dane wejściowe są zbyt długie."}), 400
+
+    site = re.sub(r"[^a-zA-Z0-9.\-_/]", "", site)
 
     try:
         encrypted_password = encrypt_text(password)
@@ -100,7 +107,11 @@ def update_password(pw_id):
     if not entry:
         return jsonify({"error": "Nie znaleziono lub brak uprawnień."}), 404
 
-    data = request.get_json(force=True)
+    try:
+        data = request.get_json(force=True)
+    except Exception:
+        return jsonify({"error": "Niepoprawny JSON"}), 400
+
     if "site" in data:
         entry.site = data["site"].strip()
     if "login" in data:
@@ -113,5 +124,11 @@ def update_password(pw_id):
     if "notes" in data:
         entry.notes = data["notes"].strip()
 
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Błąd aktualizacji hasła: {type(e).__name__}")
+        return jsonify({"error": "Błąd podczas aktualizacji"}), 500
+
     return jsonify({"message": "Hasło zaktualizowano."}), 200

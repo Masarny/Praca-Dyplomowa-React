@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 
 export default function UserPasswords() {
@@ -11,14 +11,20 @@ export default function UserPasswords() {
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({ site: "", login: "", password: "", notes: "" });
-  const [visiblePasswords, setVisiblePasswords] = useState([]); // 👈 nowe
+  const [visiblePasswords, setVisiblePasswords] = useState([]);
 
   const token = localStorage.getItem("token");
 
-  const fetchPasswords = async () => {
+  const sanitizeInput = (text) => text.replace(/[<>]/g, "");
+
+  const fetchPasswords = useCallback(async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); // timeout 8s
+
     try {
       const res = await fetch("/api/passwords/", {
         headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal,
       });
 
       if (!res.ok) {
@@ -31,18 +37,33 @@ export default function UserPasswords() {
       setPasswords(data);
     } catch (e) {
       console.error("fetchPasswords error:", e);
-      alert("Błąd połączenia z serwerem lub brak autoryzacji.");
+      setError("Błąd połączenia z serwerem lub brak autoryzacji.");
+    } finally {
+      clearTimeout(timeout);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchPasswords();
-  }, []);
+  }, [token, fetchPasswords]);
 
   const handleSave = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+
+    const cleanSite = sanitizeInput(site.trim());
+    const cleanLogin = sanitizeInput(login.trim());
+    const cleanPassword = sanitizeInput(password.trim());
+    const cleanNotes = sanitizeInput(notes.trim());
+
+    if (!cleanSite || !cleanLogin || !cleanPassword) {
+      setError("Wszystkie pola (poza notatkami) są wymagane.");
+      setLoading(false);
+      return;
+    }
+
+
     try {
       const res = await fetch("/api/passwords/", {
         method: "POST",
@@ -62,6 +83,7 @@ export default function UserPasswords() {
       setNotes("");
       fetchPasswords();
     } catch (err) {
+      console.error("handleSave error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -78,9 +100,9 @@ export default function UserPasswords() {
     });
   };
 
-  const handleEditChange = (field, value) => {
+  const handleEditChange = useCallback((field, value) => {
     setEditData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const handleEditSave = async (id) => {
     try {
@@ -90,7 +112,12 @@ export default function UserPasswords() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(editData),
+        body: JSON.stringify({
+          site: sanitizeInput(editData.site.trim()),
+          login: sanitizeInput(editData.login.trim()),
+          password: sanitizeInput(editData.password.trim()),
+          notes: sanitizeInput(editData.notes.trim()),
+        }),
       });
 
       const data = await res.json();
@@ -99,6 +126,7 @@ export default function UserPasswords() {
       setEditingId(null);
       fetchPasswords();
     } catch (err) {
+      console.error("handleEditSave error:", err);
       alert(err.message);
     }
   };
@@ -117,24 +145,28 @@ export default function UserPasswords() {
 
       fetchPasswords();
     } catch (err) {
+      console.error("handleDelete error:", err);
       alert(err.message);
     }
   };
 
-  const togglePasswordVisibility = (id) => {
-    setVisiblePasswords((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
-    );
-  };
+  const togglePasswordVisibility = useCallback((id) => {
+    setTimeout(() => {
+      setVisiblePasswords((prev) =>
+        prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
+      );
+    }, 300);
+  }, []);
 
-  const handleCopyPassword = async (text) => {
+  const handleCopyPassword = useCallback(async (text) => {
     try {
+      if (!document.hasFocus()) throw new Error("Brak fokusu okna.");
       await navigator.clipboard.writeText(text);
       alert("Hasło skopiowane do schowka!");
     } catch {
       alert("Nie udało się skopiować hasła.");
     }
-  };
+  }, []);
 
   return (
     <div className="container_db">
