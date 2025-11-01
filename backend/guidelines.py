@@ -125,6 +125,16 @@ def get_guidelines():
 
             "Świadomość zagrożeń, wiedza o nich i czujność to twoje najważniejsze narzędzia obrony. "
             "Zawsze zastanów się dwa razy, zanim klikniesz link, pobierzesz plik lub udostępnisz komuś twoje dane online. "
-            "Zasada ograniczonego zaufania w sieci to najprostszy, a zarazem najskuteczniejszy sposób ochrony siebie i swoich danych. "
+            "Zasada ograniczonego zaufania w sieci to najprostszy, a zarazem najskuteczniejszy sposób ochrony siebie i swoich danych. ",
+
+            "6. Łamanie haseł użytkowników –> cyberprzestępcy często próbują uzyskać dostęp do kont użytkowników, odgadując lub łamiąc ich hasła. "
+            "Stosują w tym celu m.in. ataki słownikowe (sprawdzanie haseł z gotowej listy popularnych fraz), ataki brute-force (sprawdzanie wszystkich możliwych kombinacji znaków) "
+            "oraz tzw. credential stuffing — wykorzystanie haseł wyciekłych z innych serwisów, ponieważ wielu użytkowników używa tego samego hasła w różnych serwisach. ",
+            "- Jak się bronić: używaj długich, losowych i unikalnych haseł dla każdego ze swoich kont. "
+            "Korzystaj z menedżera haseł oraz włącz uwierzytelnianie dwuskładnikowe (2FA). "
+            "Pamiętaj, aby nigdy nie używać tego samego hasła w więcej niż jednym miejscu, w przeciwnym razie wyciek z jednego serwisu może doprowadzić do przejęcia wszystkich twoich kont. ",
+
+            "Skutkiem złamania hasła może być utrata danych, pieniędzy, dostęp do prywatnych informacji, kradzież tożsamości, a nawet wykorzystanie twojego konta do kolejnych cyberataków. "
+            "To właśnie dlatego ochrona haseł jest jednym z najważniejszych elementów bezpieczeństwa w sieci."
         ]
     })

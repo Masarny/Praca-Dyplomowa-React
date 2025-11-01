@@ -63,7 +63,6 @@ export default function UserPasswords() {
       return;
     }
 
-
     try {
       const res = await fetch("/api/passwords/", {
         method: "POST",
@@ -174,7 +173,7 @@ export default function UserPasswords() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <table>
+      <table style={{ width: "100%" }}>
         <thead>
           <tr>
             <th>Strona</th>

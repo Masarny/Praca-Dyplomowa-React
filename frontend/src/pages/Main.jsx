@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export default function Main() {
   return (
-    <div className="container">
+    <div className="container" style={{ marginTop: "50px" }}>
       <h1>Aplikacja Menedżer Haseł</h1>
       <div className="nav-container">
         <Link to="/guidelines" className="nav"><h2>Wytyczne</h2></Link>

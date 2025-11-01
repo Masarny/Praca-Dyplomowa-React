@@ -86,7 +86,6 @@ def serve_index():
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    """Globalna obsługa wyjątków"""
     print("=== Błąd backendu ===")
     traceback.print_exc()
     from werkzeug.exceptions import HTTPException
@@ -124,4 +123,3 @@ def add_security_headers(response):
 
 if __name__ == "__main__":
     app.run(debug=True)
-

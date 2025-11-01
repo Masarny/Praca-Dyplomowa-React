@@ -107,7 +107,7 @@ export default function Tester() {
   };
 
   return (
-    <div className="container">
+    <div className="container" style={{ marginTop: "150px" }}>
       <h2>Sprawdź siłę swojego hasła</h2>
 
       <input

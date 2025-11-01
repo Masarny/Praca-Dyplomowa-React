@@ -180,7 +180,7 @@ export default function Login() {
   };
 
   return (
-    <div className="container" style={{ textAlign: "center", maxWidth: "400px" }}>
+    <div className="container" style={{ textAlign: "center", maxWidth: "400px", marginTop: "150px" }}>
       <h2>{isRegister ? "Rejestracja" : "Logowanie"}</h2>
 
       {qrCode && (

@@ -127,7 +127,7 @@ export default function Creator() {
   const max = method === "random" ? 128 : 32;
 
   return (
-    <div className="container" style={{ width: "500px" }}>
+    <div className="container" style={{ width: "500px", marginTop: "20px" }}>
       <h2>Stwórz Swoje hasło</h2>
 
       <label>Wybierz Metodę Generowania Hasła:</label>
