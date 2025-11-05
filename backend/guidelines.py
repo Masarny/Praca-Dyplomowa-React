@@ -8,24 +8,24 @@ guidelines_bp = Blueprint("guidelines_bp", __name__)
 def get_guidelines():
     return jsonify({
         "Cyberbezpieczeństwo": [
-            "Cyberbezpieczeństwo to dziedzina nauki zajmująca się bezpieczeństwem systemów komputerowych, sieci, aplikacji oraz danych użytkownika przed atakami, kradzieżą lub uszkodzeniem. "
-            "Celem cyberbezpieczeństwa jest zapewnienie poufności, integralności oraz dostępności informacji, czyli tzw. triady CIA (Confidentiality, Integrity, Availability). "
-            "W praktyce oznacza to dbanie o to, aby dane użytkownika były bezpieczne, niezmienione i dostępne tylko dla i wyłącznie dla niego. ",
+            "Cyberbezpieczeństwo to dziedzina nauki zajmująca się bezpieczeństwem oraz ochroną systemów komputerowych, sieci, aplikacji i danych użytkownika przed atakami, kradzieżą lub uszkodzeniem. "
+            "Jednym z celów cyberbezpieczeństwa jest zapewnienie poufności, integralności oraz dostępności informacji, czyli tzw. triady CIA (Confidentiality, Integrity, Availability). "
+            "W praktyce oznacza to dbanie, aby dane użytkownika były bezpieczne, niezmienione i dostępne tylko dla i wyłącznie dla niego. ",
 
             "Dlaczego cyberbezpieczeństwo jest dla nas ważne? Ponieważ w dzisiejszym świecie niemal wszystko, z czym wchodzimy interakcję - od bankowości, przez komunikację, po zakupy - odbywa się online. "
-            "Każde urządzenie podłączone do Internetu może stać się celem ataku, a jego właściciel – ofiarą kradzieży danych, pieniędzy lub tożsamości. "
-            "Cyberprzestępcy często wykorzystują nieuwagę, brak wiedzy oraz naiwność zwykłych ludzi, dlatego warto zachować ostrożność w sieci, jak i posiadać odpowiedniom wiedzę. ",
+            "Każde urządzenie podłączone do Internetu może stać się celem ataku, a jego właściciel - ofiarą kradzieży danych, pieniędzy lub tożsamości. "
+            "Cyberprzestępcy często wykorzystują nieuwagę, brak wiedzy oraz naiwność zwykłych ludzi, dlatego warto zachować ostrożność w sieci, jak i mieć odpowiednią wiedzę. ",
 
             "Podstawy cyberbezpieczeństwa to m.in.: ",
-            "- Stosowanie silnych, unikalnych, ciężkich do odgadnięcia haseł; ",
+            "- Stosowanie unikalnych, długich oraz ciężkich do odgadnięcia haseł; ",
             "- Weryfikacja dwuetapowa (MFA); ",
             "- Regularna aktualizacja systemu i oprogramowania; ",
             "- Ostrożność przy otwieraniu załączników i linków w e-mailach oraz na stronach internetowych; ",
             "- Korzystanie z bezpiecznych i szyfrowanych sieci Wi-Fi; ",
-            "- Korzystanie z oprogramowania antywirusowego oraz antymalware. ",
+            "- Korzystanie z oprogramowania antywirusowego. ",
             "Warto też pamiętać o regularnym tworzeniu kopii zapasowych najważniejszych dla nas danych. Pomoże to odzyskać je w przypadku awarii lub ataku na nie. ",
 
-            "Warto uczyć się cyberbezpieczeństwa, ponieważ świadomość użytkownika jest najlepszą linią obrony przeciwko atakom cyberprzestępców. "
+            "Warto uczyć się podstaw cyberbezpieczeństwa, ponieważ świadomość użytkownika jest najlepszą linią obrony przeciwko atakom cyberprzestępców. "
             "Nawet najlepszy antywirus nie ochroni nas, jeżeli użytkownik udostępni swoje dane przestępcy. "
             "I ty możesz zwiększyć swoje bezpieczeństwo w sieci, wystarczy, że będziesz czujny, zaktualizujesz swój system oraz oprogramowanie antywirusowe i nie będziesz ufać zbyt dobrym ofertom w Internecie. "
         ],
@@ -88,30 +88,30 @@ def get_guidelines():
             "Nowoczesne aplikacje coraz częściej łączą te trzy elementy, zwiększając tym samym bezpieczeństwo logowania. ",
 
             "W praktyce, najlepszym rozwiązaniem jest uwierzytelnianie wieloskładnikowe (MFA), które łączy w sobie kilka metod uwierzytelniania jednocześnie. "
-            "Na przykład: wpisujemy hasło (pierwszy składnik), a następnie potwierdzamy nasze logowanie kodem dostarczonym na nasz e-mail lub SMS-em (drugi składnik). "
+            "Na przykład: wpisujemy hasło (pierwszy składnik), a następnie potwierdzamy nasze logowanie kodem TOTP w telefonie  (drugi składnik). "
             "Niektóre firmy oferują też logowanie z potwierdzeniem w aplikacji mobilnej bez konieczności wpisywania kodu (np. banki). ",
 
             "Dlaczego jest to ważne dla użytkownika? Jeżeli przestępca pozna twoje hasło, to bez drugiego składnika uwierzytelniania nie dua mu się uzyskać dostępu do twojego konta. "
             "MFA jest w ten sposób jednym z najskuteczniejszych sposobów ochrony konta oraz danych użytkownika przed włamaniem i kradzieżą. ",
 
-            "Uważaj zawsze na fałszywe strony logowania oraz pamiętaj, aby nie podawać kodów (drugiego skłądnika) innym osobom. Są to najczęstsze sposoby na utratę naszego konta. "
+            "Uważaj zawsze na fałszywe strony logowania oraz pamiętaj, aby nie podawać kodów (drugiego składnika) innym osobom. Są to najczęstsze sposoby na utratę naszego konta. "
             "Jeśli dostaniesz powiadomienie o próbie logowania, której nie rozpoznajesz, natychmiast zmień swoje hasło i zgłoś to do obsługi serwisu. "
         ],
         "Ataki na Użytkowników": [
-            "Ataki na użytkowników w Internecie to bardzo duży problem w obecnym społeczeństwie. Wykorzystują one naszą nieuwagę, zaufanie lub brak wiedzy na tematy techniczne. "
+            "Ataki na użytkowników w Internecie to bardzo duży problem w obecnym społeczeństwie. Wykorzystują one naszą nieuwagę, zaufanie lub brak wiedzy technicznej. "
             "Najlepszym mechanizmem na obronę przeciwko nim to zrozumienie, jak działają. "
-            "Pamiętaj również, że cyberprzestępcy nie zawsze atakują, wykorzystując technologię, bardzo często korzystają z manipulacji, dobroci i strachu człowieka. ",
+            "Pamiętaj również, że cyberprzestępcy nie zawsze atakują, wykorzystując zaawansowaną technologię, bardzo często korzystają z manipulacji, dobroci i strachu człowieka. ",
 
-            "1. Phishing -> jest to oszustwo polegające na podszywaniu się przestępcy pod znane instytucje np. banki, pocztę, sklep internetowy. "
+            "1. Phishing -> jest to oszustwo polegające na podszywaniu się przez przestępcę pod znane instytucje np. banki, pocztę, sklep internetowy. "
             "Ofiara ataku dostaje e-mail lub SMS z linkiem prowadzącym do fałszywej strony, gdzie podaje swoje dane logowania lub kartę płatniczą. ",
-            "- Jak się bronić: nigdy nie klikaj w podejrzane linki, sprawdzaj adres strony, korzystaj z narzędzi dom sprawdzania linków oraz używaj tylko oficjalnych aplikacji. "
-            "Zawsze zwracaj uwagę, czy adresy stron zaczyna się od 'https://' i czy domena (nazwa strony) jest poprawna (np. 'bank.com', a nie 'bank_secure_notscam.com'). ",
+            "- Jak się bronić: nigdy nie klikaj w podejrzane linki, sprawdzaj adres strony, korzystaj z narzędzi do sprawdzania linków oraz używaj tylko oficjalnych aplikacji. "
+            "Zawsze zwracaj uwagę, czy adresy stron zaczyna się od 'https://' i czy domena (nazwa strony) jest poprawna (np. 'bank.com', a nie 'bank-secure-notscam.com'). ",
 
             "2. Malware –> jest to złośliwe oprogramowanie (np. wirusy, trojany, ransomware), które jest wykorzystywane przez przestępcę do kradzieży naszych danych lub blokowania komputera. ",
-            "- Jak się bronić: regularnie aktualizuj swój system, używaj oprogramowania antywirusowego oraz antymalware, nie pobieraj żadnych plików z nieznanych źródeł. "
-            "Jak najwięcej unikaj pirackiego oraz nieoficjalnego oprogramowania - często zawierają one złośliwy kod i są najczęstszą przyczyną zainfekowania malware. ",
+            "- Jak się bronić: regularnie aktualizuj swój system, używaj oprogramowania antywirusowego, nie pobieraj żadnych plików z nieznanych źródeł. "
+            "Jak najwięcej unikaj pirackiego oraz nieoficjalnego oprogramowania - często zawierają one złośliwy kod i są najczęstszą przyczyną zainfekowania oprogramowaniem typu malware. ",
 
-            "3. Ataki socjotechniczne –> polegają na manipulacji człowiekiem, aby sam przekazał poufne informacje. Często przestępca podaje się za znane nam osoby lub pracowników korzystanych przez nas firm. ",
+            "3. Ataki socjotechniczne –> polegają na manipulacji człowiekiem, aby sam przekazał atakującemu poufne informacje. Często przestępca podaje się za znane nam osoby lub pracowników, z których usłuch korzystamy. ",
             "- Jak się bronić: nigdy nie udostępniaj nikomu swoich haseł, kodów oraz danych osobistych przez telefon lub e-mail. "
             "Przestępcy często podszywają się pod pracowników banku, policję lub firmę kurierską, staraj się zawsze jak najbardziej weryfikować takie rozmowy. ",
 

@@ -110,7 +110,6 @@ def update_password(password_id):
         if not password_entry:
             return jsonify({"error": "Nie znaleziono hasła."}), 404
 
-        # Szyfrujemy dane przy aktualizacji
         if "site" in data:
             password_entry.site = safe_encrypt(data["site"])
         if "login" in data:
