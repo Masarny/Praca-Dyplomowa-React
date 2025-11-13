@@ -11,7 +11,8 @@ class User(db.Model):
     totp_secret = db.Column(db.String(32), nullable=True)
 
 
-class StoredPassword(db.Model):
+class StoredPasswords(db.Model):
+    __tablename__ = "storedpasswords"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     site = db.Column(db.String(255), nullable=False)
