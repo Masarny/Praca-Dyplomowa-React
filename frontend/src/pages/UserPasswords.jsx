@@ -19,7 +19,7 @@ export default function UserPasswords() {
 
   const fetchPasswords = useCallback(async () => {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // timeout 8s
+    const timeout = setTimeout(() => controller.abort(), 8000);
 
     try {
       const res = await fetch("/api/passwords/", {
@@ -173,142 +173,154 @@ export default function UserPasswords() {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <table style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th>Strona</th>
-            <th>Login</th>
-            <th>Hasło</th>
-            <th>Notatki</th>
-            <th>Akcje</th>
-          </tr>
-        </thead>
-        <tbody>
-          {passwords.length > 0 ? (
-            passwords.map((p) => (
-              <tr key={p.id}>
-                {editingId === p.id ? (
-                  <>
-                    <td>
-                      <input
-                        type="text"
-                        value={editData.site}
-                        onChange={(e) => handleEditChange("site", e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={editData.login}
-                        onChange={(e) => handleEditChange("login", e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <input
-                        type="text"
-                        value={editData.password}
-                        onChange={(e) => handleEditChange("password", e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <textarea
-                        rows="2"
-                        value={editData.notes}
-                        onChange={(e) => handleEditChange("notes", e.target.value)}
-                      />
-                    </td>
-                    <td>
-                      <button onClick={() => handleEditSave(p.id)}>Zapisz</button>
-                      <button onClick={() => setEditingId(null)}>Anuluj</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td>
-                      <a
-                        href={
-                          p.site.startsWith("http://") || p.site.startsWith("https://")
-                            ? p.site
-                            : `https://${p.site}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: "#0077cc", textDecoration: "none", fontWeight: "bold" }}
-                      >
-                        {p.site}
-                      </a>
-                    </td>
-                    <td>{p.login}</td>
-                    <td>
-                      {visiblePasswords.includes(p.id)
-                        ? p.password
-                        : "••••••••"}
-                      <button
-                        className="btn-db"
-                        onClick={() => togglePasswordVisibility(p.id)}
-                      >
-                        {visiblePasswords.includes(p.id) ? "Ukryj" : "Pokaż"}
-                      </button>
-                      <button
-                        className="btn-db"
-                        onClick={() => handleCopyPassword(p.password)}
-                      >
-                        Kopiuj
-                      </button>
-                    </td>
-                    <td>{p.notes}</td>
-                    <td>
-                      <button className="btn-db" onClick={() => handleEditClick(p)}>
-                        Edytuj
-                      </button>
-                      <button className="btn-db" onClick={() => handleDelete(p.id)}>
-                        Usuń
-                      </button>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))
-          ) : (
+      <div className="table-wrapper">
+        <table className="responsive-table" style={{ width: "100%" }}>
+          <thead>
             <tr>
-              <td colSpan="5" style={{ textAlign: "center" }}>
-                Brak zapisanych haseł.
-              </td>
+              <th>Strona</th>
+              <th>Login</th>
+              <th>Hasło</th>
+              <th>Notatki</th>
+              <th>Akcje</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {passwords.length > 0 ? (
+              passwords.map((p) => (
+                <tr key={p.id}>
+                  {editingId === p.id ? (
+                    <>
+                      <td>
+                        <input
+                          type="text"
+                          className="table-input"
+                          value={editData.site}
+                          onChange={(e) => handleEditChange("site", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="table-input"
+                          value={editData.login}
+                          onChange={(e) => handleEditChange("login", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="text"
+                          className="table-input"
+                          value={editData.password}
+                          onChange={(e) => handleEditChange("password", e.target.value)}
+                        />
+                      </td>
+                      <td>
+                        <textarea
+                          className="table-textarea"
+                          value={editData.notes}
+                          onChange={(e) => handleEditChange("notes", e.target.value)}
+                        />
+                      </td>
+                      <td className="table-actions">
+                        <button className="table-btn" onClick={() => handleEditSave(p.id)}>Zapisz</button>
+                        <button className="table-btn" onClick={() => setEditingId(null)}>Anuluj</button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>
+                        <a
+                          href={
+                            p.site.startsWith("http://") || p.site.startsWith("https://")
+                              ? p.site
+                              : `https://${p.site}`
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: "#0077cc", textDecoration: "none", fontWeight: "bold" }}
+                        >
+                          {p.site}
+                        </a>
+                      </td>
+                      <td>{p.login}</td>
+                      <td>
+                        {visiblePasswords.includes(p.id)
+                          ? p.password
+                          : "••••••••"}
+                        <button className="btn-db" onClick={() => togglePasswordVisibility(p.id)}>
+                          {visiblePasswords.includes(p.id) ? "Ukryj" : "Pokaż"}
+                        </button>
+                        <button className="btn-db" onClick={() => handleCopyPassword(p.password)}>
+                          Kopiuj
+                        </button>
+                      </td>
+                      <td>{p.notes}</td>
+                      <td>
+                        <button className="btn-db" onClick={() => handleEditClick(p)}>
+                          Edytuj
+                        </button>
+                        <button className="btn-db" onClick={() => handleDelete(p.id)}>
+                          Usuń
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center" }}>
+                  Brak zapisanych haseł.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
       <h3>Dodaj nowe hasło</h3>
+
       <form onSubmit={handleSave}>
-        <input
-          type="text"
-          placeholder="Strona (np. gmail.com)"
-          value={site}
-          onChange={(e) => setSite(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Login"
-          value={login}
-          onChange={(e) => setLogin(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Hasło"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <textarea
-          style={{ marginTop: "15px" }}
-          placeholder="Notatki (opcjonalne)"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows="2"
-        />
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Strona (np. gmail.com)"
+            value={site}
+            onChange={(e) => setSite(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Login"
+            value={login}
+            onChange={(e) => setLogin(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <input
+            type="text"
+            placeholder="Hasło"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <textarea
+            style={{ marginTop: "15px" }}
+            placeholder="Notatki (opcjonalne)"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows="2"
+          />
+        </div>
+
         <button className="btn" type="submit" disabled={loading}>
           {loading ? "Zapisywanie..." : "Zapisz hasło"}
         </button>

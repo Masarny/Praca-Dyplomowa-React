@@ -60,7 +60,7 @@ export default function Creator() {
     } catch (err) {
       console.error("Generate error:", err);
       if (err.name === "AbortError") setError("Przekroczono czas oczekiwania (7s).");
-      else setError(err.message || "Failed to generate password");
+      else setError(err.message || "Nie udało się wygenerować hasła.");
     } finally {
       setLoading(false);
     }
@@ -73,8 +73,8 @@ export default function Creator() {
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch (e) {
-      console.error("Copy failed", e);
-      setError("Copy failed");
+      console.error("Błąd kopiowania", e);
+      setError("Błąd kopiowania");
     }
   };
 
@@ -122,7 +122,7 @@ export default function Creator() {
     }
   };
 
-  const labelText = method === "random" ? "Password length:" : "Number of words:";
+  const labelText = method === "random" ? "Długość hasła:" : "Liczba słów:";
   const min = method === "random" ? 8 : 1;
   const max = method === "random" ? 128 : 32;
 
@@ -256,8 +256,8 @@ export default function Creator() {
           onChange={(e) => setSite(e.target.value)}
         />
         <input
-          placeholder="Login / adres e-mail"
-          aria-label="Login lub adres e-mail"
+          placeholder="Login"
+          aria-label="Login"
           value={login}
           onChange={(e) => setLogin(e.target.value)}
         />

@@ -22,13 +22,6 @@ body {
     margin: 20px;
 }
 
-.container,
-.container_db,
-.container_guide {
-    margin-left: auto;
-    margin-right: auto;
-}
-
 .container_guide {
     max-width: 800px;
     width: 100%;
@@ -137,13 +130,13 @@ nav p {
     text-decoration: none;
 }
 
-th {
+th{
     width: 20%;
     border-radius: 5px;
     border: 0.8px solid #d1b000;
 }
 
-td {
+td{
     border: 0.5px solid;
 }
 
@@ -238,7 +231,7 @@ tr:nth-child(even) {
 @media (max-width: 900px) {
     body {
         flex-direction: column;
-        align-items: center;
+        align-items: center; /* BYŁO: stretch */
         padding: 10px;
     }
 
@@ -270,11 +263,11 @@ tr:nth-child(even) {
     td {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         gap: 6px;
         border-bottom: 1px solid #ddd;
         padding: 10px 5px;
-        text-align: center !important;
+        text-align: left !important;
     }
 
     td:last-child {
@@ -300,3 +293,4 @@ tr:nth-child(even) {
         padding: 6px 10px;
     }
 }
+
