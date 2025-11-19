@@ -12,7 +12,7 @@ class User(db.Model):
 
 
 class StoredPassword(db.Model):
-    __tablename__ = "storedpasswords"
+    __tablename__ = "passwords"
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     site = db.Column(db.String(255), nullable=False)

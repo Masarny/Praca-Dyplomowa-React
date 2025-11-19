@@ -62,9 +62,9 @@ def generate_diceware():
         D = _dice_cache
 
     words = []
-    for _ in range(count):
+    for ch in range(count):
         while True:
-            key = "".join(str(random.randint(1,6)) for _ in range(5))
+            key = "".join(str(random.randint(1,6)) for ch in range(5))
             if key in D:
                 words.append(D[key])
                 break
@@ -92,8 +92,8 @@ def generate_from_phrase():
     phrase = re.sub(r"[<>\"']", "", phrase)
     phrase = re.sub(r"\s+", " ", phrase)
 
-    specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "="]
-    separator = random.choice(["@", "$", "&", "_", "-", "=", " "])
+    specials = ["!", "@", "#", "$", "%", "^", "&", "*", "_", "-", "=", "+"]
+    separator = random.choice(["@", "#", "$", "%", "&", "_", "-", "=", " "])
 
     words = phrase.split(" ")
 
