@@ -249,7 +249,7 @@ def improve_password():
             return jsonify({"error": "Hasło jest zbyt długie (max 512 znaków)."}), 400
 
         password = html.escape(password)
-        specials = ["@", "#", "$", "%", "&", "!", "*", "_", "-", "+", "?"]
+        specials = ["@", "#", "$", "%", "&", "^", "!", "*", "_", "-", "+", "=", "?"]
         digits = "0123456789"
         words = re.split(r"\s+", password)
 

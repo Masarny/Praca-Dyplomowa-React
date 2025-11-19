@@ -71,7 +71,7 @@ def get_guidelines():
             "24. 1234567 ",
             "25. qazwsx ",
 
-            "Pełna lista najczęściej używanych haseł (aktualizowana corocznie): "
+            "Lista najczęściej używanych haseł (aktualizowana corocznie): "
             "https://cybernews.com/best-password-managers/most-common-passwords/. ",
             "Jeśli używasz któregoś z tych haseł, to natychmiast je zmień! " 
             "Pamiętaj również, że zawsze warto odświeżyć hasłą do ważnych dla nas kont co kilka. "
